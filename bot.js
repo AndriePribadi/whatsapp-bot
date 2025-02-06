@@ -47,10 +47,10 @@ client.on('message', async (message) => {
         const wl_singer_id = body.trim(); // Hapus spasi berlebih
 
         // Cek apakah wl_singer_id hanya berisi angka
-        if (!/^\d+$/.test(wl_singer_id)) {
-            await client.sendMessage(from, '⚠️ ID hanya boleh berupa *angka*, coba lagi ya.');
-            return;
-        }
+        // if (!/^\d+$/.test(wl_singer_id)) {
+        //     await client.sendMessage(from, '⚠️ ID hanya boleh berupa *angka*, coba lagi ya.');
+        //     return;
+        // }
 
         if (!wl_singer_id) {
             await client.sendMessage(from, '⚠️ ID tidak boleh kosong, coba lagi ya.');
@@ -60,25 +60,30 @@ client.on('message', async (message) => {
         try {
             // Cek ke API apakah wl_singer_id valid
             const response = await axios.post(
-                "https://mrpribadi.com/home/Include/checkid.php",
+                "https://mrpribadi.com/home/Include/API/check_id.php",
                 { wl_singer_id: wl_singer_id },
                 { httpsAgent: agent }
             );
 
-            const { responseCode, responseMessage } = response.data;
+            const { responseCode, responseMessage1, responseMessage2 } = response.data;
 
-            // console.log("wl_singer_id : " + wl_singer_id);
-            // console.log("response.data : " + response.data);
-            // console.log("responseCode : " + responseCode);
-            // console.log("responseMessage : " + responseMessage);
+            // // debug
+            console.log("wl_singer_id : " + wl_singer_id);
+            console.log("response.data : " + response.data);
+            console.log("responseCode : " + responseCode);
+            console.log("responseMessage1 : " + responseMessage1);
+            console.log("responseMessage2 : " + responseMessage2);
 
             if (responseCode === "OK") {
-                userStates[from].wl_singer_id = wl_singer_id;
+                userStates[from].wl_singer_id = responseMessage2;
                 userStates[from].stage = 'waiting_for_content';
                 await client.sendMessage(from, `🎉 Selamat datang *${responseMessage}*! \nSilakan kirimkan rangkuman doa pagi hari ini.`);
             } else {
                 await client.sendMessage(from, '❌ ID tidak ditemukan, mohon dicoba kembali.');
             }
+          
+            console.log("userStates[from].wl_singer_id : " + userStates[from].wl_singer_id);
+          
         } catch (error) {
             console.error("❌ Error saat memeriksa ID:", error);
             await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memeriksa ID.');
@@ -100,7 +105,7 @@ client.on('message', async (message) => {
         try {
             // Kirim data ke API doapagiapi.php
             await axios.post(
-                "https://mrpribadi.com/home/Include/doapagiapi.php",
+                "https://mrpribadi.com/home/Include/API/insert_doapagi.php",
                 { wl_singer_id: userWlSingerId, content: userContent },
                 { httpsAgent: agent }
             );
