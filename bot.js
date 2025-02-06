@@ -6,6 +6,10 @@ const https = require('https');
 const express = require('express');
 const app = express();
 
+app.get('/health', (req, res) => {
+    res.status(200).send('Bot is running');
+});
+
 const port = process.env.PORT || 3000;  // Menggunakan PORT dari environment atau fallback ke 3000
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
