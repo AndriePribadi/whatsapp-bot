@@ -36,7 +36,7 @@ client.on('message', async (message) => {
     const { from, body } = message;
 
     // Langkah 1: User mengetik "doa pagi"
-    if (body.toLowerCase() === 'doa pagi' && !userStates[from]) {
+    if ((body.toLowerCase() === 'doa pagi' || body.toLowerCase() === 'hi') && !userStates[from]) {
         userStates[from] = { stage: 'waiting_for_id' };
         await client.sendMessage(from, '*🙋🏻‍♂️ Hi... Shalom* \n🌞 selamat pagi, \n📝silahkan masukan *ID* kamu ya.');
         return;
