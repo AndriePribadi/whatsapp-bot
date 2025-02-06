@@ -3,15 +3,6 @@ const qrcode = require('qrcode-terminal');
 const axios = require('axios');
 const https = require('https');
 
-const express = require('express');
-const app = express();
-
-const port = process.env.PORT || 3000;  // Gunakan PORT yang diberikan oleh Render
-
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
-
 // Bypass SSL error untuk API self-signed
 const agent = new https.Agent({
     rejectUnauthorized: false,
