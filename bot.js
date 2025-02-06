@@ -77,7 +77,7 @@ client.on('message', async (message) => {
             if (responseCode === "OK") {
                 userStates[from].wl_singer_id = responseMessage2;
                 userStates[from].stage = 'waiting_for_content';
-                await client.sendMessage(from, `🎉 Selamat datang *${responseMessage}*! \nSilakan kirimkan rangkuman doa pagi hari ini.`);
+                await client.sendMessage(from, `🎉 Selamat datang *${responseMessage1}*! \nSilakan kirimkan rangkuman doa pagi hari ini.`);
             } else {
                 await client.sendMessage(from, '❌ ID tidak ditemukan, mohon dicoba kembali.');
             }
