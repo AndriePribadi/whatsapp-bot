@@ -48,7 +48,7 @@ client.on('message', async (message) => {
         return;
     }
 
-    const nama = "";
+    let nama = "";
 
     // Langkah 2: User mengisi wl_singer_id
     if (userStates[from]?.stage === 'waiting_for_id') {
