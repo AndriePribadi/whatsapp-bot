@@ -52,7 +52,7 @@ client.on('message', async (message) => {
     if (text === 'hi') {
         userStates[from] = { stage: 'waiting_for_selection' };
         const greeting = getGreeting();
-        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. *${greeting}* \n\n` +
+        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. ${greeting} \n\n` +
             ` Silakan reply sesuai kata kunci dibawah ini:\n`+
             ` * *doa* / *doa pagi* → Untuk memulai mengisi doa pagi.\n`+
             ` * *event* / *event registration* → Untuk melihat kegiatan dan pendaftaran.`);
@@ -72,7 +72,7 @@ client.on('message', async (message) => {
     if ((text === 'doa pagi' || text === 'doa') && (!userStates[from] || userStates[from].stage === 'waiting_for_selection')) {
         userStates[from] = { stage: 'waiting_for_id' };
         const greeting = getGreeting();
-        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. ${greeting} \n📝 Silakan masukkan *ID WL / Singer* kamu ya.`);
+        await client.sendMessage(from, `📝 Silakan masukkan *_ID WL / Singer_* kamu ya.`);
         return;
     }
 
@@ -80,7 +80,7 @@ client.on('message', async (message) => {
     if (userStates[from]?.stage === 'waiting_for_id') {
         const wl_singer_id = body.trim();
         if (!wl_singer_id) {
-            await client.sendMessage(from, '⚠️ Maaf *ID WL / Singer* tidak boleh kosong, coba lagi ya.');
+            await client.sendMessage(from, '⚠️ Maaf *_ID WL / Singer_* tidak boleh kosong, coba lagi ya.');
             return;
         }
         try {
@@ -119,7 +119,7 @@ client.on('message', async (message) => {
              
             const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
             await client.sendMessage(from, 
-                `*Terima kasih!* Rangkuman doa pagi kamu sudah kami terima. \n` +
+                `*Terima kasih!* Rangkuman doa pagi kamu sudah kami terima. \n\n` +
                 `_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n` +
                 `*Tuhan Yesus memberkati* 🥳✨`
             );
