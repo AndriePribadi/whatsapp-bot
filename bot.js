@@ -109,10 +109,10 @@ client.on('message', async (message) => {
 
             const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
             await client.sendMessage(from, 
-                `✅ *Terima kasih!* Rangkuman doa pagi kamu sudah kami terima dan kami simpan. \n` +
+                `✅ *Terima kasih!* Rangkuman doa pagi kamu sudah kami terima. \n` +
                 `🕰️ Berhasil disimpan pada : *${now}* \n\n` +
-                `*_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kita berada ya._* \n` +
-                `Tuhan Yesus memberkati 🥳✨`
+                `_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n` +
+                `*Tuhan Yesus memberkati* 🥳✨`
             );
 
             // Kirim notifikasi ke nomor admin dengan nama user
