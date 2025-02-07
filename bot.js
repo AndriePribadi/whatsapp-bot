@@ -41,11 +41,10 @@ client.on('message', async (message) => {
             `ℹ️ *Informasi DOA PAGI - WL SINGER* ℹ️\n\n` +
             `📌 *Perintah yang tersedia:*\n` +
             `* *hi* → Memulai percakapan.\n` +
-            `* *doa pagi* atau *doa* → Memulai pengisian doa pagi.\n` +
-            `* *daftar kegiatan* atau *daftar* → Cek daftar kegiatan.\n` +
+            `* *doa* atau *doa pagi* → Memulai pengisian doa pagi.\n` +
+            `* *event* atau *event registration* → Melihat kegiatan dan pendaftaran.\n` +
             `* *cancel* → Membatalkan proses pengisian.\n\n` +
-            `📞 Jika butuh bantuan lebih lanjut, silakan hubungi *Andrie* di 📲 *08119320402*\n`+
-            `🙏🏻 Terima kasih`
+            `📞 Jika butuh bantuan lebih lanjut, silakan hubungi *Andrie* di 📲 *08119320402*`
         );
         return;
     }
@@ -53,25 +52,27 @@ client.on('message', async (message) => {
     if (text === 'hi') {
         userStates[from] = { stage: 'waiting_for_selection' };
         const greeting = getGreeting();
-        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. *${greeting}* \n📌 Silakan pilih salah satu:\n✅ *doa pagi* / *doa* → Untuk mengisi doa pagi.\n✅ *daftar kegiatan* / *daftar* → Untuk melihat daftar kegiatan.`);
+        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. *${greeting}* \n\nSilakan pilih salah satu fitur dibawah ini:\n✅ *doa* / *doa pagi* → Untuk memulai mengisi doa pagi.\n✅ *event* / *event registration* → Untuk melihat kegiatan dan pendaftaran.`);
         return;
     }
 
-    if (text === 'daftar kegiatan' || text === 'daftar') {
+    if (text === 'event' || text === 'event registration') {
         await client.sendMessage(from, 
             `📅 *Informasi Daftar Kegiatan* 📅\n\n` +
-            `⚠️ Saat ini belum ada kegiatan tersedia.\n` +
-            `✨ Silakan coba lagi di lain waktu ya! Terima kasih sudah menghubungi kami. 😊`
+            `Saat ini belum ada kegiatan tersedia.\n` +
+            `Silakan coba lagi di lain waktu ya!\n` +
+            `Terima kasih sudah menghubungi kami. 😊`
         );
         return;
     }
 
-    if ((text === 'doa pagi' || text === 'doa') && !userStates[from]) {
+    if ((text === 'doa pagi' || text === 'doa') && (!userStates[from] || userStates[from].stage === 'waiting_for_selection')) {
         userStates[from] = { stage: 'waiting_for_id' };
         const greeting = getGreeting();
-        await client.sendMessage(from, `📝 Silakan reply dengan masukkan *ID WL / Singer* kamu ya.`);
+        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. *${greeting}* \n📝 Silakan masukkan *ID WL / Singer* kamu ya.`);
         return;
     }
+
 
     if (userStates[from]?.stage === 'waiting_for_id') {
         const wl_singer_id = body.trim();
