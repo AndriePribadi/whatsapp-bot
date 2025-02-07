@@ -48,7 +48,7 @@ client.on('message', async (message) => {
         return;
     }
 
-    let nama = "";
+    const nama = "";
 
     // Langkah 2: User mengisi wl_singer_id
     if (userStates[from]?.stage === 'waiting_for_id') {
@@ -68,7 +68,7 @@ client.on('message', async (message) => {
             const { responseCode, responseMessage1, responseMessage2 } = response.data;
             console.log(`ID: ${wl_singer_id}, Response:`, response.data);
 
-            nama = ${responseMessage1};
+            nama = responseMessage1;
 
             if (responseCode === "OK") {
                 userStates[from] = { stage: 'waiting_for_content', wl_singer_id: responseMessage2 };
