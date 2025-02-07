@@ -17,6 +17,15 @@ const client = new Client({ authStrategy: new LocalAuth() });
 client.on('qr', (qr) => qrcode.generate(qr, { small: true }));
 client.on('ready', () => console.log('✅ Bot WhatsApp siap digunakan!'));
 
+// Fungsi untuk menentukan ucapan berdasarkan waktu
+const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 4 && hour < 11) return "Shalom dan selamat pagi! 🌞";
+    if (hour >= 11 && hour < 15) return "Shalom dan selamat siang! ☀️";
+    if (hour >= 15 && hour < 19) return "Shalom dan selamat sore! 🌅";
+    return "Shalom dan selamat malam! 🌙";
+};
+
 client.on('message', async (message) => {
     const { from, body } = message;
     const text = body.toLowerCase();
@@ -25,14 +34,15 @@ client.on('message', async (message) => {
     // Jika user mengetik "cancel"
     if (text === 'cancel' && userStates[from]) {
         delete userStates[from];
-        await client.sendMessage(from, '🚫 *Oke, proses kami batalkan ya.* \nTerima kasih dan sampai ketemu lagi 🙋🏻‍♂️');
+        await client.sendMessage(from, '🚫 *Oke, proses kami batalkan ya.* \n🙋🏻‍♂️ Terima kasih dan sampai ketemu lagi.');
         return;
     }
 
     // Langkah 1: User mengetik "doa pagi" atau "hi"
     if ((text === 'doa pagi' || text === 'hi') && !userStates[from]) {
         userStates[from] = { stage: 'waiting_for_id' };
-        await client.sendMessage(from, '*🙋🏻‍♂️ Hi... Shalom dan selamat pagi! 🌞* \n📝 Silakan masukkan *ID WL / Singer* kamu ya.');
+        const greeting = getGreeting();
+        await client.sendMessage(from, `🙋🏻‍♂️ *${greeting}* \n📝 Silakan masukkan *ID* kamu ya.`);
         return;
     }
 
@@ -84,10 +94,10 @@ client.on('message', async (message) => {
             );
 
             const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-            await client.sendMessage(from, `✅ *Terima kasih!* \nRangkuman doa pagi kamu sudah kami terima dan kami simpan. \n🕰️ Berhasil disimpan pada : *${now}* \n*_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kita berada ya._* \nTuhan Yesus memberkati 🥳✨`);
+            await client.sendMessage(from, `✅ *Terima kasih!* Rangkuman doa pagi kamu sudah kami terima dan kami simpan. \n🕰️ Berhasil disimpan pada : *${now}* \n\n*_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kita berada ya._* \nTuhan Yesus memberkati 🥳✨`);
 
             // Kirim notifikasi ke nomor admin
-            await client.sendMessage(adminNumber, `📢 DOA PAGI Info! \nID: *${userWlSingerId}* baru saja submit doa pagi pada *${now}*.`);
+            await client.sendMessage(adminNumber, `📢 DOA PAGI Info! \nID: *${responseMessage1}* baru saja submit doa pagi pada *${now}*.`);
 
             delete userStates[from];
         } catch (error) {
