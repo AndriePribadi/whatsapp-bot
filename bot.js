@@ -38,13 +38,14 @@ client.on('message', async (message) => {
 
     if (text === 'info') {
         await client.sendMessage(from, 
-            `ℹ️ *Informasi Bot Doa Pagi* ℹ️\n\n` +
+            `ℹ️ *Informasi DOA PAGI - WL SINGER* ℹ️\n\n` +
             `📌 *Perintah yang tersedia:*\n` +
-            `✅ *hi* → Memulai percakapan.\n` +
-            `✅ *doa pagi* atau *doa* → Memulai pengisian doa pagi.\n` +
-            `✅ *daftar kegiatan* atau *daftar* → Cek daftar kegiatan.\n` +
-            `❌ *cancel* → Membatalkan proses pengisian.\n` +
-            `📞 Jika butuh bantuan lebih lanjut, silakan hubungi *Andrie* di 📲 *08119320402*`
+            `* *hi* → Memulai percakapan.\n` +
+            `* *doa pagi* atau *doa* → Memulai pengisian doa pagi.\n` +
+            `* *daftar kegiatan* atau *daftar* → Cek daftar kegiatan.\n` +
+            `* *cancel* → Membatalkan proses pengisian.\n\n` +
+            `📞 Jika butuh bantuan lebih lanjut, silakan hubungi *Andrie* di 📲 *08119320402*\n`+
+            `🙏🏻 Terima kasih`
         );
         return;
     }
@@ -68,7 +69,7 @@ client.on('message', async (message) => {
     if ((text === 'doa pagi' || text === 'doa') && !userStates[from]) {
         userStates[from] = { stage: 'waiting_for_id' };
         const greeting = getGreeting();
-        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. *${greeting}* \n📝 Silakan masukkan *ID WL / Singer* kamu ya.`);
+        await client.sendMessage(from, `📝 Silakan reply dengan masukkan *ID WL / Singer* kamu ya.`);
         return;
     }
 
@@ -111,8 +112,13 @@ client.on('message', async (message) => {
                 { wl_singer_id: userWlSingerId, content: userContent },
                 { httpsAgent: agent }
             );
+             
             const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-            await client.sendMessage(from, `✅ *Terima kasih!* Doa pagi kamu telah disimpan pada *${now}*.`);
+            await client.sendMessage(from, 
+                `✅ *Terima kasih!* Rangkuman doa pagi kamu sudah kami terima. \n +
+                _Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n +
+                *Tuhan Yesus memberkati* 🥳✨`
+            );
             await client.sendMessage(adminNumber, `📢 *${userName}* baru saja submit doa pagi pada *${now}*.`);
             delete userStates[from];
         } catch (error) {
