@@ -5,6 +5,8 @@ const https = require('https');
 const express = require('express');
 
 const app = express();
+app.use(express.json());
+
 app.get('/health', (req, res) => res.status(200).send('Bot is running'));
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Server running on port ${port}`));
@@ -15,6 +17,8 @@ const client = new Client({ authStrategy: new LocalAuth() });
 
 client.on('qr', (qr) => qrcode.generate(qr, { small: true }));
 client.on('ready', () => console.log('✅ Bot WhatsApp siap digunakan!'));
+
+const API_BASE_URL = "https://mrpribadi.com/home/Include/API";
 
 const getGreeting = () => {
     const hour = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', hour12: false });
@@ -76,7 +80,6 @@ client.on('message', async (message) => {
         return;
     }
 
-
     if (userStates[from]?.stage === 'waiting_for_id') {
         const wl_singer_id = body.trim();
         if (!wl_singer_id) {
@@ -85,7 +88,7 @@ client.on('message', async (message) => {
         }
         try {
             const response = await axios.post(
-                "https://mrpribadi.com/home/Include/API/check_id.php",
+                `${API_BASE_URL}/check_id.php`,
                 { wl_singer_id },
                 { httpsAgent: agent }
             );
@@ -107,12 +110,12 @@ client.on('message', async (message) => {
         const userName = userStates[from].userName;
         const userContent = body.trim();
         if (!userContent) {
-            await client.sendMessage(from, '⚠️ Rangkuman doa pagi tidak boleh kosong. Silakan kirim ulang.');
+            await client.sendMessage(from, '⚠️ Rangkuman doa pagi tidak boleh kosong atau format yang kamu kirimkan tidak sesuai. Mohon kirim kembali.\n\n_note: format yang bisa kami terima saat ini hanya berupa text, jangan mengirimkan sticker, gambar atau video._');
             return;
         }
         try {
             await axios.post(
-                "https://mrpribadi.com/home/Include/API/insert_doapagi.php",
+                `${API_BASE_URL}/insert_doapagi.php`,
                 { wl_singer_id: userWlSingerId, content: userContent },
                 { httpsAgent: agent }
             );
