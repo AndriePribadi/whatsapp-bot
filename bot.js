@@ -11,7 +11,6 @@ app.listen(port, () => console.log(`Server running on port ${port}`));
 
 const agent = new https.Agent({ rejectUnauthorized: false });
 const userStates = {};
-
 const client = new Client({ authStrategy: new LocalAuth() });
 
 client.on('qr', (qr) => qrcode.generate(qr, { small: true }));
@@ -19,12 +18,15 @@ client.on('ready', () => console.log('✅ Bot WhatsApp siap digunakan!'));
 
 // Fungsi untuk menentukan ucapan berdasarkan waktu
 const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour >= 4 && hour < 11) return "Shalom dan selamat pagi! 🌞";
-    if (hour >= 11 && hour < 15) return "Shalom dan selamat siang! ☀️";
-    if (hour >= 15 && hour < 19) return "Shalom dan selamat sore! 🌅";
+    const hour = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', hour12: false });
+    const hourInt = parseInt(hour, 10); // Konversi ke integer
+
+    if (hourInt >= 4 && hourInt < 11) return "Shalom dan selamat pagi! 🌞";
+    if (hourInt >= 11 && hourInt < 15) return "Shalom dan selamat siang! ☀️";
+    if (hourInt >= 15 && hourInt < 19) return "Shalom dan selamat sore! 🌅";
     return "Shalom dan selamat malam! 🌙";
 };
+
 
 client.on('message', async (message) => {
     const { from, body } = message;
@@ -42,9 +44,11 @@ client.on('message', async (message) => {
     if ((text === 'doa pagi' || text === 'hi') && !userStates[from]) {
         userStates[from] = { stage: 'waiting_for_id' };
         const greeting = getGreeting();
-        await client.sendMessage(from, `🙋🏻‍♂️ *${greeting}* \n📝 Silakan masukkan *ID* kamu ya.`);
+        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. *${greeting}* \n📝 Silakan masukkan *ID WL /Singer* kamu ya.`);
         return;
     }
+
+    let nama = "";
 
     // Langkah 2: User mengisi wl_singer_id
     if (userStates[from]?.stage === 'waiting_for_id') {
@@ -63,6 +67,8 @@ client.on('message', async (message) => {
 
             const { responseCode, responseMessage1, responseMessage2 } = response.data;
             console.log(`ID: ${wl_singer_id}, Response:`, response.data);
+
+            nama = ${responseMessage1};
 
             if (responseCode === "OK") {
                 userStates[from] = { stage: 'waiting_for_content', wl_singer_id: responseMessage2 };
@@ -97,7 +103,7 @@ client.on('message', async (message) => {
             await client.sendMessage(from, `✅ *Terima kasih!* Rangkuman doa pagi kamu sudah kami terima dan kami simpan. \n🕰️ Berhasil disimpan pada : *${now}* \n\n*_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kita berada ya._* \nTuhan Yesus memberkati 🥳✨`);
 
             // Kirim notifikasi ke nomor admin
-            await client.sendMessage(adminNumber, `📢 DOA PAGI Info! \nID: *${responseMessage1}* baru saja submit doa pagi pada *${now}*.`);
+            await client.sendMessage(adminNumber, `📢 DOA PAGI Info! \nID: *${nama}* baru saja submit doa pagi pada *${now}*.`);
 
             delete userStates[from];
         } catch (error) {
