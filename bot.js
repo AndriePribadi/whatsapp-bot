@@ -44,7 +44,7 @@ client.on('message', async (message) => {
             `* *doa* atau *doa pagi* → Memulai pengisian doa pagi.\n` +
             `* *event* atau *event registration* → Melihat kegiatan dan pendaftaran.\n` +
             `* *cancel* → Membatalkan proses pengisian.\n\n` +
-            `📞 Jika butuh bantuan lebih lanjut, silakan hubungi *Andrie* di 📲 *08119320402*`
+            `📞 Jika butuh bantuan lebih lanjut, silakan menghubungi *Andrie* di 📲 *08119320402*`
         );
         return;
     }
@@ -52,15 +52,18 @@ client.on('message', async (message) => {
     if (text === 'hi') {
         userStates[from] = { stage: 'waiting_for_selection' };
         const greeting = getGreeting();
-        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. *${greeting}* \n\nSilakan pilih salah satu fitur dibawah ini:\n✅ *doa* / *doa pagi* → Untuk memulai mengisi doa pagi.\n✅ *event* / *event registration* → Untuk melihat kegiatan dan pendaftaran.`);
+        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. *${greeting}* \n\n` +
+            ` Silakan reply sesuai kata kunci dibawah ini:\n`+
+            ` * *doa* / *doa pagi* → Untuk memulai mengisi doa pagi.\n`
+            ` * *event* / *event registration* → Untuk melihat kegiatan dan pendaftaran.`);
         return;
     }
 
     if (text === 'event' || text === 'event registration') {
         await client.sendMessage(from, 
-            `📅 *Informasi Daftar Kegiatan* 📅\n\n` +
+            `📅 *Informasi Kegiatan* 📅\n\n` +
             `Saat ini belum ada kegiatan tersedia.\n` +
-            `Silakan coba lagi di lain waktu ya!\n` +
+            `Silakan coba lagi di lain waktu ya.\n` +
             `Terima kasih sudah menghubungi kami. 😊`
         );
         return;
@@ -69,7 +72,7 @@ client.on('message', async (message) => {
     if ((text === 'doa pagi' || text === 'doa') && (!userStates[from] || userStates[from].stage === 'waiting_for_selection')) {
         userStates[from] = { stage: 'waiting_for_id' };
         const greeting = getGreeting();
-        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. *${greeting}* \n📝 Silakan masukkan *ID WL / Singer* kamu ya.`);
+        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. ${greeting} \n📝 Silakan masukkan *ID WL / Singer* kamu ya.`);
         return;
     }
 
@@ -91,7 +94,7 @@ client.on('message', async (message) => {
                 userStates[from] = { stage: 'waiting_for_content', wl_singer_id: responseMessage2, userName: responseMessage1 };
                 await client.sendMessage(from, `🎉 Selamat datang *${responseMessage1}*! \nSilakan kirimkan rangkuman doa pagi hari ini.`);
             } else {
-                await client.sendMessage(from, '❌ Maaf *ID WL / Singer* tidak ditemukan, coba cek lagi atau hubungi *Andrie*.');
+                await client.sendMessage(from, '❌ Maaf *ID WL / Singer* tidak ditemukan, mohon coba cek kembali atau hubungi *Andrie* ya.');
             }
         } catch (error) {
             await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memeriksa ID.');
@@ -116,9 +119,9 @@ client.on('message', async (message) => {
              
             const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
             await client.sendMessage(from, 
-                `✅ *Terima kasih!* Rangkuman doa pagi kamu sudah kami terima. \n +
-                _Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n +
-                *Tuhan Yesus memberkati* 🥳✨`
+                `*Terima kasih!* Rangkuman doa pagi kamu sudah kami terima. \n` +
+                `_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n` +
+                `*Tuhan Yesus memberkati* 🥳✨`
             );
             await client.sendMessage(adminNumber, `📢 *${userName}* baru saja submit doa pagi pada *${now}*.`);
             delete userStates[from];
