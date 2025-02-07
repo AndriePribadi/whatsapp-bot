@@ -54,7 +54,7 @@ client.on('message', async (message) => {
         const greeting = getGreeting();
         await client.sendMessage(from, `🙋🏻‍♂️ Hi .. *${greeting}* \n\n` +
             ` Silakan reply sesuai kata kunci dibawah ini:\n`+
-            ` * *doa* / *doa pagi* → Untuk memulai mengisi doa pagi.\n`
+            ` * *doa* / *doa pagi* → Untuk memulai mengisi doa pagi.\n`+
             ` * *event* / *event registration* → Untuk melihat kegiatan dan pendaftaran.`);
         return;
     }
