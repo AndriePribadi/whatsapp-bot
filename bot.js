@@ -78,10 +78,10 @@ client.on('message', async (message) => {
 
                 await client.sendMessage(from, 
                     `📊 *Absensi Doa Pagi*\n\n` +
-                    `📅 *Bulan ini:* ${today.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}\n` +
-                    `✅ *Jumlah Hadir:* ${jumlahKehadiran} hari\n` +
-                    `📆 *Total Hari Berjalan:* ${hariDalamBulan} hari\n` +
-                    `📈 *Persentase Kehadiran:* ${persentase}%\n\n` +
+                    `📅 *Bulan * ${today.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}\n` +
+                    `✅ *Jumlah kehadiran:* ${jumlahKehadiran} hari\n` +
+                    `📆 *Total hari berjalan:* ${hariDalamBulan} hari\n` +
+                    `📈 *Persentase kehadiran:* ${persentase}%\n\n` +
                     `_Jangan jemu-jemu untuk terus membangun kebiasaan doa pagi ya!_ 🙏`
                 );
             } else {
@@ -104,7 +104,7 @@ client.on('message', async (message) => {
 
             if (response.data.status === "success") {
                 const username = response.data.username;
-                await client.sendMessage(from, `👤 Username kamu adalah *${username}*. Silahkan login dan menggunakan aplikasi kita.`);
+                await client.sendMessage(from, `👤 Username kamu adalah *${username}*.`);
             } else {
                 await client.sendMessage(from, `⚠️ *Error:* ${response.data.message}`);
             }
@@ -226,7 +226,7 @@ client.on('message', async (message) => {
                 },
                 { httpsAgent: agent }
             );
-            await client.sendMessage(from, "✅ Catatan kotbah berhasil disimpan! Terima kasih telah berbagi.");
+            await client.sendMessage(from, "✅ Catatan kotbah berhasil disimpan! \nTerus bangun kebiasaan baik ini ya 💞.");
         } catch (error) {
             await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan catatan kotbahmu.");
         }
@@ -295,8 +295,8 @@ client.on('message', async (message) => {
     // 🔹 Jika user mengetik "/birthday"
     if (text === "/birthday") {
         try {
-            const response = await axios.get(API_BIRTHDAY_URL, { httpsAgent: agent });
-
+            const response = await axios.get(`${API_BASE_URL}/birthday.php`, { httpsAgent: agent } );
+            
             if (response.data.status === "success") {
                 const birthdayList = response.data.birthdays;
 
@@ -305,7 +305,7 @@ client.on('message', async (message) => {
                     messageText += `\n${index + 1}. *${b.nama_lengkap}* - ${b.tanggal_lahir}`;
                 });
 
-                messageText += "\n\n✨ Jangan lupa ucapkan selamat ya! 🎉";
+                // messageText += "\n\n✨ Jangan lupa ucapkan selamat ya! 🎉";
 
                 await client.sendMessage(from, messageText);
             } else {
