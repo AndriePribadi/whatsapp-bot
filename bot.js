@@ -50,8 +50,10 @@ client.on('message', async (message) => {
             `* */hi* atau */info* → Memulai percakapan dan melihat command apa yang tersedia.\n` +
             `* */event* → Melihat informasi kegiatan.\n` +
             `* */absensi* → Melihat persentase kehadiran doa pagi.\n` +
-            `* */uername* → Melihat username untuk login web based application *WL Singer*.\n` +
-            `* */web* atau */app* → Shortcut untuk membuka web based application *WL Singer*.\n` +
+            `* */birthday* → Melihat siapa yang akan ulang tahun dalam waktu dekat ini.\n` +
+            `* */sermonnote* → Membuat *catatan kotbah*.\n` +
+            `* */uername* → Melihat username untuk login aplikasi *WL Singer* berbasis web.\n` +
+            `* */web* atau */app* → Link untuk membuka aplikasi *WL Singer* berbasis web .\n` +
             `* untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi dihari tersebut\n\n` +
             `📞 Jika butuh bantuan lebih lanjut, silakan menghubungi *Andrie* di 📲 *08119320402*`
         );
@@ -132,7 +134,9 @@ client.on('message', async (message) => {
         );
         return;
     }
-    
+
+    // doa pagi - inject oleh admin
+    // doa pagi start
     if (text === '/doa' && (!userStates[from] || userStates[from].stage === 'waiting_for_selection')) {
         userStates[from] = { stage: 'waiting_for_id' };
         await client.sendMessage(from, `📝 Silakan masukkan *_ID WL / Singer_* kamu ya.`);
@@ -161,7 +165,76 @@ client.on('message', async (message) => {
         }
         return;
     }
+    // doa pagi end
 
+    // scope untuk sermon note 
+    // sermon note - start 
+    if (text === '/sermonnote' && (!userStates[from] || userStates[from].stage === 'waiting_for_selection')) {
+        userStates[from] = { stage: 'waiting_for_church' };
+        await client.sendMessage(from, "🏛️ Ibadah apa yang sedang kamu ikuti saat ini?");
+        return;
+    }
+
+    if (userStates[from]?.stage === 'waiting_for_church') {
+        userStates[from].church = body;
+        userStates[from].stage = 'waiting_for_speaker';
+        await client.sendMessage(from, "🎤 Siapa nama pembicara yang saat ini ingin kamu catat?\n_(Jika tidak ada, silakan reply dengan '-')_");
+        return;
+    }
+
+    if (userStates[from]?.stage === 'waiting_for_speaker') {
+        userStates[from].speaker = body;
+        userStates[from].stage = 'waiting_for_title';
+        await client.sendMessage(from, "📖 Apa judul atau tema kotbahnya saat ini?\n_(Jika tidak ada, silakan reply dengan '-')_");
+        return;
+    }
+
+    if (userStates[from]?.stage === 'waiting_for_title') {
+        userStates[from].title = body;
+        userStates[from].stage = 'waiting_for_content';
+        await client.sendMessage(from, "📝 Silahkan isi catatan kotbahnya di bawah ini.");
+        return;
+    }
+
+    if (userStates[from]?.stage === 'waiting_for_content') {
+        userStates[from].content = body;
+        userStates[from].stage = 'waiting_for_summary';
+        await client.sendMessage(from, "🔍 Apakah kesimpulan yang bisa kamu ambil dari kotbah ini?\n_(Jika belum ada, silakan reply dengan '-')_");
+        return;
+    }
+
+    if (userStates[from]?.stage === 'waiting_for_summary') {
+        userStates[from].summary = body;
+        userStates[from].stage = 'waiting_for_remindme';
+        await client.sendMessage(from, "⏰ Apakah ada hal penting yang perlu kamu ingat dan bisa kami ingatkan di kemudian hari?\n_(Jika belum ada, silakan reply dengan '-')_");
+        return;
+    }
+
+    if (userStates[from]?.stage === 'waiting_for_remindme') {
+        userStates[from].remindme = body;
+        try {
+            await axios.post(
+                `${API_BASE_URL}/insert_sermonnote.php`,
+                {
+                    wl_singer_id: from,
+                    church_sermonnote: userStates[from].church,
+                    speaker_sermonnote: userStates[from].speaker,
+                    titlesermon_sermonnote: userStates[from].title,
+                    content_sermonnote: userStates[from].content,
+                    summary_sermonnote: userStates[from].summary,
+                    remindme_sermonnote: userStates[from].remindme,
+                },
+                { httpsAgent: agent }
+            );
+            await client.sendMessage(from, "✅ Catatan kotbah berhasil disimpan! Terima kasih telah berbagi.");
+        } catch (error) {
+            await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan catatan kotbahmu.");
+        }
+        delete userStates[from];
+        return;
+    }
+    // end - sermon note
+    
     if (userStates[from]?.stage === 'waiting_for_content') {
         const userWlSingerId = userStates[from].wl_singer_id;
         const userName = userStates[from].userName;
@@ -188,25 +261,26 @@ client.on('message', async (message) => {
         }
         return;
     }
-    
-    if (text.length > 20 && !text.startsWith('/')) {
+
+    // Doa pagi direct input oleh setiap pengguna (jika tidak sedang dalam sesi /doa atau /sermonnote)
+    if (text.length > 20 && !text.startsWith('/') && (!userStates[from] || !userStates[from].stage)) {
         try {
             const response = await axios.post(
                 `${API_BASE_URL}/insert_doapagi.php`,
                 { wl_singer_id: userPhoneNumber, content: body.trim() },
                 { httpsAgent: agent }
             );
-
+    
             if (response.data.status === "success") {
                 const namaLengkap = response.data.nama_lengkap;
                 const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-
+    
                 await client.sendMessage(from, 
                     `✅ *Terima kasih, ${namaLengkap}!* Doa pagi kamu sudah diterima. \n\n` +
                     `_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n` +
                     `✨ *Tuhan Yesus memberkati!* 🥳`
                 );
-
+    
                 await client.sendMessage(adminNumber, `📢 *${namaLengkap}* (${userPhoneNumber}) baru saja submit doa pagi pada *${now}*.`);
             } else {
                 await client.sendMessage(from, `⚠️ *Gagal menyimpan doa pagi:* ${response.data.message}`);
@@ -217,6 +291,33 @@ client.on('message', async (message) => {
         }
         return;
     }
+    
+    // 🔹 Jika user mengetik "/birthday"
+    if (text === "/birthday") {
+        try {
+            const response = await axios.get(API_BIRTHDAY_URL, { httpsAgent: agent });
+
+            if (response.data.status === "success") {
+                const birthdayList = response.data.birthdays;
+
+                let messageText = "🎂 *Upcoming Birthdays!* 🎂\n";
+                birthdayList.forEach((b, index) => {
+                    messageText += `\n${index + 1}. *${b.nama_lengkap}* - ${b.tanggal_lahir}`;
+                });
+
+                messageText += "\n\n✨ Jangan lupa ucapkan selamat ya! 🎉";
+
+                await client.sendMessage(from, messageText);
+            } else {
+                await client.sendMessage(from, "⚠️ Tidak ada ulang tahun dalam waktu dekat.");
+            }
+        } catch (error) {
+            console.error("Error fetching birthdays:", error);
+            await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data ulang tahun.");
+        }
+        return;
+    }
+    
 });
 
 client.initialize();
