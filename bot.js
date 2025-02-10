@@ -37,11 +37,11 @@ client.on('message', async (message) => {
     // 🔹 Bersihkan nomor agar hanya angka (tanpa @c.us)
     const userPhoneNumber = from.replace('@c.us', '');
 
-    // if (text === '/cancel' && userStates[from]) {
-    //     delete userStates[from];
-    //     await client.sendMessage(from, '🚫 *Oke, proses sudah kami batalkan.* \n🙋🏻‍♂️ Terima kasih dan sampai ketemu lagi.');
-    //     return;
-    // }
+    if (text === '/cancel' && userStates[from]) {
+        delete userStates[from];
+        await client.sendMessage(from, '🚫 *Oke, proses sudah kami batalkan.* \n🙋🏻‍♂️ Terima kasih dan sampai ketemu lagi.');
+        return;
+    }
 
     if (text === '/hi' || text === '/info') {
         const greeting = getGreeting();
@@ -200,7 +200,7 @@ client.on('message', async (message) => {
     // sermon note - start 
     if (text === '/sermonnote' && (!userStates[from] || userStates[from].stage === 'waiting_for_selection')) {
         userStates[from] = { stage: 'waiting_for_church' };
-        await client.sendMessage(from, "🏛️ Ibadah apa yang sedang kamu ikuti saat ini?");
+        await client.sendMessage(from, "🏛️ Ibadah apa yang sedang kamu ikuti saat ini?\n_untuk membatalkan proses pengisian, silahkan masukan perintah */cancel*_");
         return;
     }
 
@@ -220,12 +220,12 @@ client.on('message', async (message) => {
 
     if (userStates[from]?.stage === 'waiting_for_title') {
         userStates[from].title = body;
-        userStates[from].stage = 'waiting_for_content';
+        userStates[from].stage = 'waiting_for_sermon';
         await client.sendMessage(from, "📝 Silahkan isi catatan kotbahnya di bawah ini.");
         return;
     }
 
-    if (userStates[from]?.stage === 'waiting_for_content') {
+    if (userStates[from]?.stage === 'waiting_for_sermon') {
         userStates[from].content = body;
         userStates[from].stage = 'waiting_for_summary';
         await client.sendMessage(from, "🔍 Apakah kesimpulan yang bisa kamu ambil dari kotbah ini?\n_(Jika belum ada, silakan reply dengan '-')_");
