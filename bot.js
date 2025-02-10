@@ -31,104 +31,85 @@ const getGreeting = () => {
 
 client.on('message', async (message) => {
     const { from, body } = message;
-    const text = body.toLowerCase();
+    const text = body.toLowerCase().trim();
     const adminNumber = '628119320402@c.us';
 
-    if (text === 'cancel' && userStates[from]) {
-        delete userStates[from];
-        await client.sendMessage(from, '🚫 *Oke, proses sudah kami batalkan.* \n🙋🏻‍♂️ Terima kasih dan sampai ketemu lagi.');
-        return;
-    }
+    // 🔹 Bersihkan nomor agar hanya angka (tanpa @c.us)
+    const userPhoneNumber = from.replace('@c.us', '');
 
-    if (text === 'info') {
-        await client.sendMessage(from, 
-            `ℹ️ *Informasi DOA PAGI - WL SINGER* ℹ️\n\n` +
-            `📌 *Perintah yang tersedia:*\n` +
-            `* *hi* → Memulai percakapan.\n` +
-            `* *doa* atau *doa pagi* → Memulai pengisian doa pagi.\n` +
-            `* *event* atau *event registration* → Melihat kegiatan dan pendaftaran.\n` +
-            `* *cancel* → Membatalkan proses pengisian.\n\n` +
+    // if (text === '/cancel' && userStates[from]) {
+    //     delete userStates[from];
+    //     await client.sendMessage(from, '🚫 *Oke, proses sudah kami batalkan.* \n🙋🏻‍♂️ Terima kasih dan sampai ketemu lagi.');
+    //     return;
+    // }
+
+    if (text === '/hi' || text === '/info') {
+        const greeting = getGreeting();
+        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. ${greeting} \n\n` +
+            `📌 *Terima kasih sudah terhubung dengan kami, command yang tersedia saat ini :*\n` +
+            `* */hi* atau */info* → Memulai percakapan dan melihat command apa yang tersedia.\n` +
+            `* */event* → Melihat informasi kegiatan dan pendaftaran terdekat.\n` +
+            `* */absensi* → Melihat persentase kehadiran doa pagi.\n` +
+            `* */uername* → Melihat username untuk login web based application *WL Singer*.\n` +
+            `* */web* atau */app* → Shortcut untuk membuka web based application *WL Singer*.\n` +
+            `* untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi dihari tersebut\n\n` +
             `📞 Jika butuh bantuan lebih lanjut, silakan menghubungi *Andrie* di 📲 *08119320402*`
         );
         return;
     }
 
-    if (text === 'hi') {
-        userStates[from] = { stage: 'waiting_for_selection' };
-        const greeting = getGreeting();
-        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. ${greeting} \n\n` +
-            ` Silakan reply sesuai kata kunci dibawah ini:\n`+
-            ` * *doa* / *doa pagi* → Untuk memulai mengisi doa pagi.\n`+
-            ` * *event* / *event registration* → Untuk melihat kegiatan dan pendaftaran.`);
-        return;
-    }
-
-    if (text === 'event' || text === 'event registration') {
+    if (text === '/absensi' || text === '/username') {
         await client.sendMessage(from, 
-            `📅 *Informasi Kegiatan* 📅\n\n` +
-            `Saat ini belum ada kegiatan tersedia.\n` +
-            `Silakan coba lagi di lain waktu ya.\n` +
-            `Terima kasih sudah menghubungi kami. 😊`
+            `📅 *Function still on progress* 📅\n\n` +
+            `Untuk saat ini, fitur ini masih dalam proses pengerjaan ya, kami akan secepatnya menghadirkan fitur ini.\n` +
+            `Terima kasih sudah menghubungi kami dan semoga informasi yang kami sampaikan membantu. 😊`
         );
         return;
     }
 
-    if ((text === 'doa pagi' || text === 'doa') && (!userStates[from] || userStates[from].stage === 'waiting_for_selection')) {
-        userStates[from] = { stage: 'waiting_for_id' };
-        const greeting = getGreeting();
-        await client.sendMessage(from, `📝 Silakan masukkan *_ID WL / Singer_* kamu ya.`);
+    if (text === '/web' || text === '/app') {
+        await client.sendMessage(from, 
+            `🌐 *Our Website* 🌐\n\n` +
+            `Silahkan click link dibawah ini.\n` +
+            `https://mrpribadi.com/home/` +
+            `Terima kasih sudah menghubungi kami dan semoga informasi yang kami sampaikan membantu. 😊`
+        );
         return;
     }
 
-    if (userStates[from]?.stage === 'waiting_for_id') {
-        const wl_singer_id = body.trim();
-        if (!wl_singer_id) {
-            await client.sendMessage(from, '⚠️ Maaf *_ID WL / Singer_* tidak boleh kosong, coba lagi ya.');
-            return;
-        }
+    if (text === '/event') {
+        await client.sendMessage(from, 
+            `📅 *Informasi Kegiatan* 📅\n\n` +
+            `Mohon maaf saat ini belum ada informasi kegiatan yang tersedia tersedia.\n` +
+            `Terima kasih sudah menghubungi kami dan semoga informasi yang kami sampaikan membantu. 😊`
+        );
+        return;
+    }
+
+    if (text.length > 20 && !text.startsWith('/')) {
         try {
             const response = await axios.post(
-                `${API_BASE_URL}/check_id.php`,
-                { wl_singer_id },
+                `${API_BASE_URL}/insert_doapagi.php`,
+                { wl_singer_id: userPhoneNumber, content: body.trim() },
                 { httpsAgent: agent }
             );
-            const { responseCode, responseMessage1, responseMessage2 } = response.data;
-            if (responseCode === "OK") {
-                userStates[from] = { stage: 'waiting_for_content', wl_singer_id: responseMessage2, userName: responseMessage1 };
-                await client.sendMessage(from, `🎉 Selamat datang *${responseMessage1}*! \nSilakan kirimkan rangkuman doa pagi hari ini.`);
+
+            if (response.data.status === "success") {
+                const namaLengkap = response.data.nama_lengkap;
+                const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+
+                await client.sendMessage(from, 
+                    `✅ *Terima kasih, ${namaLengkap}!* Doa pagi kamu sudah diterima. \n\n` +
+                    `_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n` +
+                    `✨ *Tuhan Yesus memberkati!* 🥳`
+                );
+
+                await client.sendMessage(adminNumber, `📢 *${namaLengkap}* (${userPhoneNumber}) baru saja submit doa pagi pada *${now}*.`);
             } else {
-                await client.sendMessage(from, '❌ Maaf *ID WL / Singer* tidak ditemukan, mohon coba cek kembali atau hubungi *Andrie* ya.');
+                await client.sendMessage(from, `⚠️ *Gagal menyimpan doa pagi:* ${response.data.message}`);
             }
         } catch (error) {
-            await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memeriksa ID.');
-        }
-        return;
-    }
-
-    if (userStates[from]?.stage === 'waiting_for_content') {
-        const userWlSingerId = userStates[from].wl_singer_id;
-        const userName = userStates[from].userName;
-        const userContent = body.trim();
-        if (!userContent) {
-            await client.sendMessage(from, '⚠️ Rangkuman doa pagi tidak boleh kosong atau format yang kamu kirimkan tidak sesuai. Mohon kirim kembali.\n\n_note: format yang bisa kami terima saat ini hanya berupa text, jangan mengirimkan sticker, gambar atau video._');
-            return;
-        }
-        try {
-            await axios.post(
-                `${API_BASE_URL}/insert_doapagi.php`,
-                { wl_singer_id: userWlSingerId, content: userContent },
-                { httpsAgent: agent }
-            );
-             
-            const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-            await client.sendMessage(from, 
-                `*Terima kasih!* Rangkuman doa pagi kamu sudah kami terima. \n\n` +
-                `_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n` +
-                `*Tuhan Yesus memberkati* 🥳✨`
-            );
-            await client.sendMessage(adminNumber, `📢 *${userName}* baru saja submit doa pagi pada *${now}*.`);
-            delete userStates[from];
-        } catch (error) {
+            console.error("Error submitting doa pagi:", error);
             await client.sendMessage(from, '⚠️ Terjadi kesalahan saat menyimpan data.');
         }
         return;
