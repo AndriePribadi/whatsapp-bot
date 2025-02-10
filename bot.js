@@ -43,23 +43,39 @@ client.on('message', async (message) => {
     //     return;
     // }
 
-    if (text === '/hi' || text === '/info') {
-        const greeting = getGreeting();
-        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. ${greeting} \n\n` +
-            `📌 *Terima kasih sudah terhubung dengan kami, kata kunci yang tersedia saat ini :*\n` +
-            `* */hi* atau */info* → Memulai percakapan dan melihat kata kunci apa saja yang tersedia.\n` +
-            `* */event* → Melihat informasi kegiatan paling dekat.\n` +
-            `* */absensi* → Melihat persentase kehadiran doa pagi.\n` +
-            `* */birthday* → Melihat siapa saja yang akan berulangtahun dalam waktu dekat.\n` +
-            `* */sermonnote* → Membuat *catatan kotbah* (_connected to apps_).\n` +
-            `* */username* → Melihat username yang bisa kamu gunakan untuk login aplikasi *WL Singer* berbasis web.\n` +
-            `* */web* atau */app* → Link untuk membuka aplikasi *WL Singer* berbasis web .\n` +
-            `* untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi dihari tersebut.\n\n` +
-            `Jika butuh bantuan lebih lanjut, \nsilakan menghubungi *Andrie* di *08119320402*...\nGod Bless ✨`
-        );
-        return;
+    function getButtons() {
+        return [
+            { buttonId: '/event', buttonText: { displayText: 'Event' }, type: 1 },
+            { buttonId: '/absensi', buttonText: { displayText: 'Absensi' }, type: 1 },
+            { buttonId: '/birthday', buttonText: { displayText: 'Birthday' }, type: 1 },
+            { buttonId: '/sermonnote', buttonText: { displayText: 'Sermon Note' }, type: 1 },
+            { buttonId: '/username', buttonText: { displayText: 'Username' }, type: 1 },
+            { buttonId: '/web', buttonText: { displayText: 'Web/App' }, type: 1 }
+        ];
     }
 
+    if (text === '/hi' || text === '/info') {
+        const greeting = getGreeting();
+        const buttons = getButtons();
+        const buttonMessage = {
+            contentText: `🙋🏻‍♂️ Hi .. ${greeting} \n\n` +
+                `📌 *Terima kasih sudah terhubung dengan kami, kata kunci yang tersedia saat ini :*\n` +
+                `* */event* → Melihat informasi kegiatan paling dekat.\n` +
+                `* */absensi* → Melihat persentase kehadiran doa pagi.\n` +
+                `* */birthday* → Melihat siapa saja yang akan berulangtahun dalam waktu dekat.\n` +
+                `* */sermonnote* → Membuat *catatan kotbah* (_connected to apps_).\n` +
+                `* */username* → Melihat username yang bisa kamu gunakan untuk login aplikasi *WL Singer* berbasis web.\n` +
+                `* */web* atau */app* → Link untuk membuka aplikasi *WL Singer* berbasis web .\n` +
+                `* untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi dihari tersebut.\n\n` +
+                `Jika butuh bantuan lebih lanjut, \nsilakan menghubungi *Andrie* di *08119320402*...\nGod Bless ✨`,
+            footerText: 'Choose an option',
+            buttons: buttons,
+            headerType: 1
+        };
+        await client.sendMessage(from, buttonMessage);
+        return;
+    }
+    
     if (text === '/absensi') {
         try {
             const response = await axios.post(
