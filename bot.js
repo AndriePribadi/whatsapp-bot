@@ -166,32 +166,64 @@ client.on('message', async (message) => {
 
     // doa pagi - inject oleh admin
     // doa pagi start
-    if (text === '/doa' && (!userStates[from] || userStates[from].stage === 'waiting_for_selection')) {
-        userStates[from] = { stage: 'waiting_for_id' };
-        await client.sendMessage(from, `📝 Silakan masukkan *_ID WL / Singer_* kamu ya.`);
+    // 🔹 Jika user hanya mengetik "/doa", minta ID
+    if (text === '/doa') {
+        await client.sendMessage(from, `📝 Silakan masukkan *_ID WL / Singer_* kamu setelah perintah ini.\n\n` +
+            `Contoh: * /doa Andrie *`);
         return;
     }
 
-    if (userStates[from]?.stage === 'waiting_for_id') {
-        const wl_singer_id = body.trim();
-        if (!wl_singer_id.startsWith('/')) { // Pastikan ID bukan command
-            try {
-                const response = await axios.post(
-                    `${API_BASE_URL}/check_id.php`,
-                    { wl_singer_id },
-                    { httpsAgent: agent }
-                );
-                const { responseCode, responseMessage1, responseMessage2 } = response.data;
-                if (responseCode === "OK") {
-                    userStates[from] = { stage: 'waiting_for_content', wl_singer_id: responseMessage2, userName: responseMessage1 };
-                    await client.sendMessage(from, `🎉 Selamat datang *${responseMessage1}*! \nSilakan kirimkan rangkuman doa pagi hari ini.`);
-                } else {
-                    await client.sendMessage(from, '❌ Maaf *ID WL / Singer* tidak ditemukan, mohon coba cek kembali atau hubungi *Andrie* ya.');
-                }
-            } catch (error) {
-                await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memeriksa ID.');
+    // 🔹 Cek apakah user mengetik "/doa <id>"
+    const match = text.match(/^\/doa\s+(.+)$/i);
+    if (match) {
+        const wl_singer_id = match[1].trim(); // Ambil ID WL/Singer
+
+        try {
+            const response = await axios.post(
+                `${API_BASE_URL}/check_id.php`,
+                { wl_singer_id },
+                { httpsAgent: agent }
+            );
+
+            const { responseCode, responseMessage1, responseMessage2 } = response.data;
+
+            if (responseCode === "OK") {
+                userStates[from] = { stage: 'waiting_for_content', wl_singer_id: responseMessage2, userName: responseMessage1 };
+                await client.sendMessage(from, `🎉 Selamat datang *${responseMessage1}*! \nSilakan kirimkan rangkuman doa pagi hari ini.`);
+            } else {
+                await client.sendMessage(from, `❌ Maaf *ID WL / Singer* tidak ditemukan, mohon coba cek kembali atau hubungi *Andrie* ya.`);
             }
+        } catch (error) {
+            await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memeriksa ID.');
         }
+        return;
+    }
+
+    // 🔹 Jika user dalam tahap memasukkan doa
+    if (userStates[from]?.stage === 'waiting_for_content') {
+        const content = text;
+
+        try {
+            const response = await axios.post(
+                `${API_BASE_URL}/insert_doapagi.php`,
+                { wl_singer_id: userStates[from].wl_singer_id, content: content },
+                { httpsAgent: agent }
+            );
+
+            if (response.data.status === "success") {
+                await client.sendMessage(from, 
+                    `✅ *Terima kasih, ${userStates[from].userName}!* \n` +
+                    `Doa pagi kamu telah kami terima. \n\n` +
+                    `*_Selamat beraktivitas dan tetap jadi berkat!_* ✨`
+                );
+            } else {
+                await client.sendMessage(from, `⚠️ *Error:* ${response.data.message}`);
+            }
+        } catch (error) {
+            await client.sendMessage(from, '⚠️ Terjadi kesalahan saat menyimpan doa.');
+        }
+
+        delete userStates[from]; // Reset state
         return;
     }
     // doa pagi end
