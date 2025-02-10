@@ -47,15 +47,15 @@ client.on('message', async (message) => {
         const greeting = getGreeting();
         await client.sendMessage(from, `🙋🏻‍♂️ Hi .. ${greeting} \n\n` +
             `📌 *Terima kasih sudah terhubung dengan kami, kata kunci yang tersedia saat ini :*\n` +
-            `* */hi* atau */info* → Memulai percakapan dan melihat command apa yang tersedia.\n` +
-            `* */event* → Melihat informasi kegiatan.\n` +
+            `* */hi* atau */info* → Memulai percakapan dan melihat kata kunci apa saja yang tersedia.\n` +
+            `* */event* → Melihat informasi kegiatan paling dekat.\n` +
             `* */absensi* → Melihat persentase kehadiran doa pagi.\n` +
-            `* */birthday* → Melihat siapa yang akan ulang tahun dalam waktu dekat ini.\n` +
-            `* */sermonnote* → Membuat *catatan kotbah*.\n` +
-            `* */uername* → Melihat username untuk login aplikasi *WL Singer* berbasis web.\n` +
+            `* */birthday* → Melihat siapa saja yang akan berulangtahun dalam waktu dekat.\n` +
+            `* */sermonnote* → Membuat *catatan kotbah* (_connected to apps_).\n` +
+            `* */username* → Melihat username yang bisa kamu gunakan untuk login aplikasi *WL Singer* berbasis web.\n` +
             `* */web* atau */app* → Link untuk membuka aplikasi *WL Singer* berbasis web .\n` +
-            `* untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi dihari tersebut\n\n` +
-            `📞 Jika butuh bantuan lebih lanjut, silakan menghubungi *Andrie* di 📲 *08119320402*`
+            `* untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi dihari tersebut.\n\n` +
+            `Jika butuh bantuan lebih lanjut, \nsilakan menghubungi *Andrie* di *08119320402*...\nGod Bless ✨`
         );
         return;
     }
@@ -76,13 +76,22 @@ client.on('message', async (message) => {
                 // 🔹 Hitung persentase kehadiran
                 const persentase = ((jumlahKehadiran / hariDalamBulan) * 100).toFixed(2);
 
+                let pesan = "";
+                if(persentase < 50){
+                    pesan = "Yuk, kamu pasti lebih rajin lagi dalam mengikuti doa pagi ini 🤗";
+                }else if(persentase >= 50 && persentase < 85){
+                    pesan = "Wah sudah sangat baik nih, terus tingkatkan ya kerajinanmu 🤗";
+                }else{
+                    pesan = "✨💯 untukmu!! Terus pertahankan kerajinanmu ini ya 🤗";
+                }
+
                 await client.sendMessage(from, 
                     `📊 *Absensi Doa Pagi*\n\n` +
-                    `📅 *Bulan * ${today.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}\n` +
-                    `✅ *Jumlah kehadiran:* ${jumlahKehadiran} hari\n` +
-                    `📆 *Total hari berjalan:* ${hariDalamBulan} hari\n` +
-                    `📈 *Persentase kehadiran:* ${persentase}%\n\n` +
-                    `_Jangan jemu-jemu untuk terus membangun kebiasaan doa pagi ya!_ 🙏`
+                    `📅 Bulan *${today.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}*\n` +
+                    `✅ Jumlah kehadiran: *${jumlahKehadiran} hari*\n` +
+                    `📆 Total hari berjalan: *${hariDalamBulan} hari*\n` +
+                    `📈 Persentase kehadiran: *${persentase}%*\n\n` +
+                    `_${pesan}_`
                 );
             } else {
                 await client.sendMessage(from, `⚠️ *Error:* ${response.data.message}`);
@@ -118,20 +127,40 @@ client.on('message', async (message) => {
     if (text === '/web' || text === '/app') {
         await client.sendMessage(from, 
             `🌐 *Our Website* 🌐\n\n` +
-            `Silahkan click link dibawah ini.\n` +
+            `Silahkan click link dibawah ini ya\n` +
             `https://mrpribadi.com/home/\n\n` +
             `Semoga informasi ini membantu. 😊`
         );
         return;
     }
 
-    if (text === '/event') {
-        await client.sendMessage(from, 
-            `📅 *Informasi Kegiatan* 📅\n\n` +
-            `Event terdekat kita adalah *HOME Meet Up with ko Ephen*.\n` +
-            `Yang akan dilaksanakan hari *Sabtu*, tanggal *22 Februari 2025*.\n\n` +
-            `Info selanjutnya menyusul ya, stay tuned. 😊`
-        );
+    // if (text === '/event') {
+    //     await client.sendMessage(from, 
+    //         `📅 *Informasi Kegiatan* 📅\n\n` +
+    //         `Event terdekat kita adalah *HOME Meet Up with ko Ephen*.\n` +
+    //         `Yang akan dilaksanakan hari *Sabtu*, tanggal *22 Februari 2025*.\n\n` +
+    //         `Info selanjutnya menyusul ya, stay tuned. 😊`
+    //     );
+    //     return;
+    // }
+    // 🔹 Jika user mengetik "/event"
+    if (text === "/event") {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/event.php`, { httpsAgent: agent });
+    
+            if (response.data.status === "success") {
+                const eventDescription = response.data.deskripsi;
+                const messageText = `📅 *Event Berikutnya!* 📅\n\n${eventDescription}\n\n` +
+                                    `Info selanjutnya menyusul ya, stay tuned. 😊`
+    
+                await client.sendMessage(from, messageText);
+            } else {
+                await client.sendMessage(from, "⚠️ Belum ada event yang akan datang.");
+            }
+        } catch (error) {
+            console.error("Error fetching event:", error);
+            await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data event.");
+        }
         return;
     }
 
