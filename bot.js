@@ -132,7 +132,63 @@ client.on('message', async (message) => {
         );
         return;
     }
+    
+    if (text === '/doa' && (!userStates[from] || userStates[from].stage === 'waiting_for_selection')) {
+        userStates[from] = { stage: 'waiting_for_id' };
+        await client.sendMessage(from, `📝 Silakan masukkan *_ID WL / Singer_* kamu ya.`);
+        return;
+    }
 
+    if (userStates[from]?.stage === 'waiting_for_id') {
+        const wl_singer_id = body.trim();
+        if (!wl_singer_id.startsWith('/')) { // Pastikan ID bukan command
+            try {
+                const response = await axios.post(
+                    `${API_BASE_URL}/check_id.php`,
+                    { wl_singer_id },
+                    { httpsAgent: agent }
+                );
+                const { responseCode, responseMessage1, responseMessage2 } = response.data;
+                if (responseCode === "OK") {
+                    userStates[from] = { stage: 'waiting_for_content', wl_singer_id: responseMessage2, userName: responseMessage1 };
+                    await client.sendMessage(from, `🎉 Selamat datang *${responseMessage1}*! \nSilakan kirimkan rangkuman doa pagi hari ini.`);
+                } else {
+                    await client.sendMessage(from, '❌ Maaf *ID WL / Singer* tidak ditemukan, mohon coba cek kembali atau hubungi *Andrie* ya.');
+                }
+            } catch (error) {
+                await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memeriksa ID.');
+            }
+        }
+        return;
+    }
+
+    if (userStates[from]?.stage === 'waiting_for_content') {
+        const userWlSingerId = userStates[from].wl_singer_id;
+        const userName = userStates[from].userName;
+        const userContent = body.trim();
+        if (!userContent.startsWith('/')) { // Pastikan bukan command
+            try {
+                await axios.post(
+                    `${API_BASE_URL}/insert_doapagi.php`,
+                    { wl_singer_id: userWlSingerId, content: userContent },
+                    { httpsAgent: agent }
+                );
+                 
+                const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+                await client.sendMessage(from, 
+                    `*Terima kasih!* Rangkuman doa pagi kamu sudah kami terima. \n\n` +
+                    `_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n` +
+                    `*Tuhan Yesus memberkati* 🥳✨`
+                );
+                await client.sendMessage(adminNumber, `📢 *${userName}* baru saja submit doa pagi pada *${now}*.`);
+                delete userStates[from];
+            } catch (error) {
+                await client.sendMessage(from, '⚠️ Terjadi kesalahan saat menyimpan data.');
+            }
+        }
+        return;
+    }
+    
     if (text.length > 20 && !text.startsWith('/')) {
         try {
             const response = await axios.post(
