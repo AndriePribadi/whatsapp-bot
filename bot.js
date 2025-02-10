@@ -46,9 +46,9 @@ client.on('message', async (message) => {
     if (text === '/hi' || text === '/info') {
         const greeting = getGreeting();
         await client.sendMessage(from, `🙋🏻‍♂️ Hi .. ${greeting} \n\n` +
-            `📌 *Terima kasih sudah terhubung dengan kami, command yang tersedia saat ini :*\n` +
+            `📌 *Terima kasih sudah terhubung dengan kami, kata kunci yang tersedia saat ini :*\n` +
             `* */hi* atau */info* → Memulai percakapan dan melihat command apa yang tersedia.\n` +
-            `* */event* → Melihat informasi kegiatan dan pendaftaran terdekat.\n` +
+            `* */event* → Melihat informasi kegiatan.\n` +
             `* */absensi* → Melihat persentase kehadiran doa pagi.\n` +
             `* */uername* → Melihat username untuk login web based application *WL Singer*.\n` +
             `* */web* atau */app* → Shortcut untuk membuka web based application *WL Singer*.\n` +
@@ -58,12 +58,58 @@ client.on('message', async (message) => {
         return;
     }
 
-    if (text === '/absensi' || text === '/username') {
-        await client.sendMessage(from, 
-            `📅 *Function still on progress* 📅\n\n` +
-            `Untuk saat ini, fitur ini masih dalam proses pengerjaan ya, kami akan secepatnya menghadirkan fitur ini.\n` +
-            `Terima kasih sudah menghubungi kami dan semoga informasi yang kami sampaikan membantu. 😊`
-        );
+    if (text === '/absensi') {
+        try {
+            const response = await axios.post(
+                `${API_BASE_URL}/check_doapagi.php`,
+                { wl_singer_id: userPhoneNumber },
+                { httpsAgent: agent }
+            );
+
+            if (response.data.status === "success") {
+                const jumlahKehadiran = response.data.jumlah_kehadiran;
+                const today = new Date();
+                const hariDalamBulan = today.getDate(); // Jumlah hari berjalan dalam bulan ini
+
+                // 🔹 Hitung persentase kehadiran
+                const persentase = ((jumlahKehadiran / hariDalamBulan) * 100).toFixed(2);
+
+                await client.sendMessage(from, 
+                    `📊 *Absensi Doa Pagi*\n\n` +
+                    `📅 *Bulan ini:* ${today.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}\n` +
+                    `✅ *Jumlah Hadir:* ${jumlahKehadiran} hari\n` +
+                    `📆 *Total Hari Berjalan:* ${hariDalamBulan} hari\n` +
+                    `📈 *Persentase Kehadiran:* ${persentase}%\n\n` +
+                    `_Jangan jemu-jemu untuk terus membangun kebiasaan doa pagi ya!_ 🙏`
+                );
+            } else {
+                await client.sendMessage(from, `⚠️ *Error:* ${response.data.message}`);
+            }
+        } catch (error) {
+            console.error("Error fetching attendance:", error);
+            await client.sendMessage(from, '⚠️ Terjadi kesalahan saat mengambil data absensi.');
+        }
+        return;
+    }
+    
+    if (text === '/username') {
+        try {
+            const response = await axios.post(
+                `${API_BASE_URL}/get_username.php`,
+                { wl_singer_id: userPhoneNumber },
+                { httpsAgent: agent }
+            );
+
+            if (response.data.status === "success") {
+                const username = response.data.username;
+                await client.sendMessage(from, `👤 Username kamu adalah *${username}*. Silahkan login dan menggunakan aplikasi kita.`);
+            } else {
+                await client.sendMessage(from, `⚠️ *Error:* ${response.data.message}`);
+            }
+        } catch (error) {
+            console.error("Error fetching username:", error);
+            await client.sendMessage(from, '⚠️ Terjadi kesalahan saat mengambil username.');
+        }
         return;
     }
 
@@ -71,8 +117,8 @@ client.on('message', async (message) => {
         await client.sendMessage(from, 
             `🌐 *Our Website* 🌐\n\n` +
             `Silahkan click link dibawah ini.\n` +
-            `https://mrpribadi.com/home/` +
-            `Terima kasih sudah menghubungi kami dan semoga informasi yang kami sampaikan membantu. 😊`
+            `https://mrpribadi.com/home/\n\n` +
+            `Semoga informasi ini membantu. 😊`
         );
         return;
     }
@@ -80,8 +126,9 @@ client.on('message', async (message) => {
     if (text === '/event') {
         await client.sendMessage(from, 
             `📅 *Informasi Kegiatan* 📅\n\n` +
-            `Mohon maaf saat ini belum ada informasi kegiatan yang tersedia tersedia.\n` +
-            `Terima kasih sudah menghubungi kami dan semoga informasi yang kami sampaikan membantu. 😊`
+            `Event terdekat kita adalah *HOME Meet Up with ko Ephen*.\n` +
+            `Yang akan dilaksanakan hari *Sabtu*, tanggal *22 Februari 2025*.\n\n` +
+            `Info selanjutnya menyusul ya, stay tuned. 😊`
         );
         return;
     }
