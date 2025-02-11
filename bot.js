@@ -205,7 +205,7 @@ client.on('message', async (message) => {
 
         try {
             const response = await axios.post(
-                `${API_BASE_URL}/insert_doapagi.php`,
+                `${API_BASE_URL}/insert_doapagi_inject.php`,
                 { wl_singer_id: userStates[from].wl_singer_id, content: content },
                 { httpsAgent: agent }
             );
@@ -296,33 +296,6 @@ client.on('message', async (message) => {
     }
     // end - sermon note
     
-    if (userStates[from]?.stage === 'waiting_for_content') {
-        const userWlSingerId = userStates[from].wl_singer_id;
-        const userName = userStates[from].userName;
-        const userContent = body.trim();
-        if (!userContent.startsWith('/')) { // Pastikan bukan command
-            try {
-                await axios.post(
-                    `${API_BASE_URL}/insert_doapagi.php`,
-                    { wl_singer_id: userWlSingerId, content: userContent },
-                    { httpsAgent: agent }
-                );
-                 
-                const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-                await client.sendMessage(from, 
-                    `*Terima kasih!* Rangkuman doa pagi kamu sudah kami terima. \n\n` +
-                    `_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n` +
-                    `*Tuhan Yesus memberkati* 🥳✨`
-                );
-                await client.sendMessage(adminNumber, `📢 *${userName}* baru saja submit doa pagi pada *${now}*.`);
-                delete userStates[from];
-            } catch (error) {
-                await client.sendMessage(from, '⚠️ Terjadi kesalahan saat menyimpan data.');
-            }
-        }
-        return;
-    }
-
     // Doa pagi direct input oleh setiap pengguna (jika tidak sedang dalam sesi /doa atau /sermonnote)
     if (text.length > 20 && !text.startsWith('/') && (!userStates[from] || !userStates[from].stage)) {
         try {
