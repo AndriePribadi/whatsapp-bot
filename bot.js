@@ -134,7 +134,7 @@ client.on('message', async (message) => {
             `* */note* → Membuat note baru.\n\n`;
         
         if (userStates[from]?.userHomeCode === 'WLS') {
-            message += `🎤 Khusus untuk Home WL Singer, coba fitur ini ya :\n` +
+            message += `🎤 Khusus untuk Home WL Singer, coba fitur ini ya :\n`;
             message += `* */absensi* → Melihat persentase kehadiran doa pagi.\n\n`;
             message += `* Dan untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi (khusus wl singer).\n\n`;
         }
