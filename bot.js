@@ -123,6 +123,7 @@ client.on('message', async (message) => {
             return;
         }
         await client.sendMessage(from, `👤 Username kamu adalah *${userStates[from].userUsername}*.`);
+        delete userStates[from];
         return;
     }
 
@@ -158,6 +159,7 @@ client.on('message', async (message) => {
         message += `Jika butuh bantuan lebih lanjut, \nJangan ragu untuk menghubungi home leader masing masing ya\n Selamat berjuang! God Bless ✨`;
         
         await client.sendMessage(from, message);
+        delete userStates[from];
         return;
     }
 
@@ -420,7 +422,6 @@ client.on('message', async (message) => {
     }
 
     if (userStates[from]?.stage === 'waiting_for_summary') {
-        const identity = await identityCheck();
         userStates[from].summary = body;
         
         // Function untuk mencoba insert sermon note dengan retry
@@ -488,12 +489,12 @@ client.on('message', async (message) => {
             await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
             return;
         }
-        userStates[from] = { stage: 'qt_waiting_for_source' };
-        await client.sendMessage(from, "📖 Hai, wah aku senang sekali kamu mau membuat journal saat teduh kamu,\nKalau aku boleh tau, apa yang sekarang kamu baca atau renungkan?\n1. Bible\n2. Daily Devotion\n3. Book\n4. Other\nSilahkan jawab dengan memasukkan angkanya saja ya...");
+        userStates[from] = { stage: 'qt_waiting_for_category' };
+        await client.sendMessage(from, "📖 Hai, wah kami senang sekali kamu mau membuat journal saat teduh kamu,\nKalau aku boleh tau, apa yang sekarang kamu baca atau renungkan?\n1. Bible\n2. Daily Devotion\n3. Book\n4. Other\nSilahkan jawab dengan memasukkan angkanya saja ya...");
         return;
     }
 
-    if (userStates[from]?.stage === 'qt_waiting_for_source') {
+    if (userStates[from]?.stage === 'qt_waiting_for_category') {
         const validOptions = ['1', '2', '3', '4'];
 
         if (!validOptions.includes(body.trim())) {
@@ -502,27 +503,33 @@ client.on('message', async (message) => {
         }
 
         userStates[from].source = body;
-        userStates[from].stage = 'qt_waiting_for_verse';
+        userStates[from].stage = 'qt_waiting_for_source';
         await client.sendMessage(from, "📜 Buku dan bagian apa yang sedang kamu baca atau renungkan?");
         return;
     }
 
-    if (userStates[from]?.stage === 'qt_waiting_for_verse') {
+    if (userStates[from]?.stage === 'qt_waiting_for_source') {
         userStates[from].verse = body;
-        userStates[from].stage = 'qt_waiting_for_reflection';
-        await client.sendMessage(from, "💭 Apa yang kamu dapat dari pembacaan ini?");
+        userStates[from].stage = 'qt_waiting_for_verse';
+        await client.sendMessage(from, "✨ Kasih aku kutipan yang akan selalu kamu ingat dari pembacaan hari ini ya");
         return;
     }
 
-    if (userStates[from]?.stage === 'qt_waiting_for_reflection') {
-        userStates[from].reflection = body;
+    if (userStates[from]?.stage === 'qt_waiting_for_verse') {
+        userStates[from].content = body;
+        userStates[from].stage = 'qt_waiting_for_content';
+        await client.sendMessage(from, "💭 Refleksi dari pembacaan kamu hari ini");
+        return;
+    }
+
+    if (userStates[from]?.stage === 'qt_waiting_for_content') {
+        userStates[from].content = body;
         userStates[from].stage = 'qt_waiting_for_actionplan';
         await client.sendMessage(from, "🎯 Apa yang harus kamu terapkan dalam hidup ini setelah membacanya?");
         return;
     }
 
     if (userStates[from]?.stage === 'qt_waiting_for_actionplan') {
-        const identity = await identityCheck();
         userStates[from].actionplan = body;
 
         const saveQuietTime = async (attempt = 1) => {
@@ -530,17 +537,18 @@ client.on('message', async (message) => {
                 console.log(`🔄 Percobaan ke-${attempt} untuk menyimpan Quiet Time...`);
                         
                 console.log(`DBG | id_user : ${userStates[from].userId}`);
+                console.log(`DBG | category_quiettime : ${userStates[from].category}`);
                 console.log(`DBG | source_quiettime : ${userStates[from].source}`);
-                console.log(`DBG | content_note : ${userStates[from].content}`);
                 console.log(`DBG | verse_quiettime : ${userStates[from].verse}`);
-                console.log(`DBG | reflection_quiettime : ${userStates[from].reflection}`);
+                console.log(`DBG | content_quiettime : ${userStates[from].content}`);
                 console.log(`DBG | actionplan_quiettime : ${userStates[from].actionplan}`);
 
                 await axios.post(`${API_BASE_URL}/insert_quiettime.php`, {
                     id_user: userStates[from].userId,
+                    category_quiettime: userStates[from].category,
                     source_quiettime: userStates[from].source,
                     verse_quiettime: userStates[from].verse,
-                    reflection_quiettime: userStates[from].reflection,
+                    content_quiettime: userStates[from].content,
                     actionplan_quiettime: userStates[from].actionplan,
                 }, {
                     headers: {
@@ -579,7 +587,6 @@ client.on('message', async (message) => {
     }
     
     if (userStates[from]?.stage === 'n_waiting_for_title') {
-        const identity = await identityCheck();
         userStates[from].title = body;
         userStates[from].stage = 'n_waiting_for_content';
         await client.sendMessage(from, "✏️ Sekarang, silakan isi catatan kamu di bawah ini.");
@@ -587,7 +594,6 @@ client.on('message', async (message) => {
     }
     
     if (userStates[from]?.stage === 'n_waiting_for_content') {
-        const identity = await identityCheck();
         userStates[from].content = body;
         
         const saveNote = async (attempt = 1) => {
