@@ -335,51 +335,31 @@ client.on('message', async (message) => {
             await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
             return;
         }
-    
-        const fetchBirthdays = async (attempt = 1) => {
-            try {
-                console.log(`🔄 Percobaan ke-${attempt} untuk mengambil data ulang tahun...`);
-    
-                const response = await axios.post(
-                    ${API_BASE_URL}/birthday.php,
-                    { kode_home: userStates[from].userHomeCode },
-                    {
-                        headers: {
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                            'Content-Type': 'application/json'
-                        },
-                        httpsAgent: agent
-                    }
-                );
-    
-                if (response.data.status === "success") {
-                    const birthdayList = response.data.birthdays;
-                    let messageText = "🎂 *Upcoming Birthdays!* 🎂\n";
-                    birthdayList.forEach((b, index) => {
-                        messageText += `\n${index + 1}. *${b.nama_lengkap}* - ${b.tanggal_lahir}`;
-                    });
-    
-                    // Kirim pesan ulang tahun
-                    await client.sendMessage(from, messageText);
-                } else {
-                    await client.sendMessage(from, "⚠️ Tidak ada ulang tahun dalam waktu dekat.");
-                }
-    
-            } catch (error) {
-                console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
-    
-                if (attempt < 5) {
-                    // Coba lagi setelah 2 detik
-                    setTimeout(() => fetchBirthdays(attempt + 1), 2000);
-                } else {
-                    // Jika sudah gagal 5 kali, kirim pesan error
-                    await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data ulang tahun. Silakan coba lagi nanti.");
-                }
+        try {
+            const response = await axios.post(
+                `${API_BASE_URL}/birthday.php`,
+                { kode_home: userStates[from].userHomeCode },
+                { httpsAgent: agent }
+            );
+
+            if (response.data.status === "success") {
+                const birthdayList = response.data.birthdays;
+
+                let messageText = "🎂 *Upcoming Birthdays!* 🎂\n";
+                birthdayList.forEach((b, index) => {
+                    messageText += `\n${index + 1}. *${b.nama_lengkap}* - ${b.tanggal_lahir}`;
+                });
+
+                // messageText += "\n\n✨ Jangan lupa ucapkan selamat ya! 🎉";
+
+                await client.sendMessage(from, messageText);
+            } else {
+                await client.sendMessage(from, "⚠️ Tidak ada ulang tahun dalam waktu dekat.");
             }
-        };
-    
-        // Jalankan percobaan pertama
-        fetchBirthdays();
+        } catch (error) {
+            console.error("Error fetching birthdays:", error);
+            await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data ulang tahun.");
+        }
         return;
     }
     
