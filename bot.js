@@ -338,7 +338,7 @@ client.on('message', async (message) => {
     
         const fetchBirthdays = async (attempt = 1) => {
             try {
-                console.log(🔄 Percobaan ke-${attempt} untuk mengambil data ulang tahun...);
+                console.log(`🔄 Percobaan ke-${attempt} untuk mengambil data ulang tahun...`);
     
                 const response = await axios.post(
                     ${API_BASE_URL}/birthday.php,
@@ -356,7 +356,7 @@ client.on('message', async (message) => {
                     const birthdayList = response.data.birthdays;
                     let messageText = "🎂 *Upcoming Birthdays!* 🎂\n";
                     birthdayList.forEach((b, index) => {
-                        messageText += \n${index + 1}. *${b.nama_lengkap}* - ${b.tanggal_lahir};
+                        messageText += `\n${index + 1}. *${b.nama_lengkap}* - ${b.tanggal_lahir}`;
                     });
     
                     // Kirim pesan ulang tahun
@@ -366,7 +366,7 @@ client.on('message', async (message) => {
                 }
     
             } catch (error) {
-                console.error(⚠️ Error pada percobaan ke-${attempt}:, error.message);
+                console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
     
                 if (attempt < 5) {
                     // Coba lagi setelah 2 detik
