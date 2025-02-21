@@ -46,12 +46,12 @@ const getGreeting = () => {
 };
 
 client.on('message', async (message) => {
-    const { from, body } = message;
+    const { from, body, author, fromMe } = message;
     const text = body.toLowerCase().trim();
     const adminNumber = '628119320402@c.us';
 
-    // 🔹 Bersihkan nomor agar hanya angka (tanpa @c.us)
-    const userPhoneNumber = from.replace('@c.us', '');
+    // Determine the sender's phone number
+    const userPhoneNumber = fromMe ? client.info.wid.user : (author || from).replace('@c.us', '');
 
     console.log(`Received message from: ${userPhoneNumber}`); // Log the phone number
 
