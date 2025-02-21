@@ -123,6 +123,8 @@ client.on('message', async (message) => {
             return;
         }
         await client.sendMessage(from, `👤 Username kamu adalah *${userStates[from].userUsername}*.`);
+        // Reset state setelah selesai
+        delete userStates[from];
         return;
     }
 
@@ -158,6 +160,8 @@ client.on('message', async (message) => {
         message += `Jika butuh bantuan lebih lanjut, \nJangan ragu untuk menghubungi home leader masing masing ya\n Selamat berjuang! God Bless ✨`;
         
         await client.sendMessage(from, message);
+        // Reset state setelah selesai
+        delete userStates[from];
         return;
     }
 
@@ -205,6 +209,8 @@ client.on('message', async (message) => {
         };
     
         checkin();
+        // Reset state setelah selesai
+        delete userStates[from];
         return;
     }
     
@@ -279,6 +285,8 @@ client.on('message', async (message) => {
     
         // Jalankan percobaan pertama
         fetchAbsensi();
+        // Reset state setelah selesai
+        delete userStates[from];
         return;
     }    
     
@@ -326,6 +334,8 @@ client.on('message', async (message) => {
     
         // Jalankan percobaan pertama
         fetchEvent();
+        // Reset state setelah selesai
+        delete userStates[from];
         return;
     }
     
@@ -360,6 +370,9 @@ client.on('message', async (message) => {
             console.error("Error fetching birthdays:", error);
             await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data ulang tahun.");
         }
+        
+        // Reset state setelah selesai
+        delete userStates[from];
         return;
     }
     
@@ -461,6 +474,11 @@ client.on('message', async (message) => {
 
     // Quiet Time
     if (text === '/quiettime' && (!userStates[from] || userStates[from].stage === 'qt_waiting_for_selection')) {
+        const identity = await identityCheck();
+        if (!identity || identity.responseCode !== "OK") {
+            await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
+            return;
+        }
         userStates[from] = { stage: 'qt_waiting_for_source' };
         await client.sendMessage(from, "📖 Hai, wah aku senang sekali kamu mau membuat journal saat teduh kamu,\nKalau aku boleh tau, apa yang sekarang kamu baca atau renungkan?\n1. Bible\n2. Daily Devotion\n3. Book\n4. Other\nSilahkan jawab dengan memasukkan angkanya saja ya...");
         return;
@@ -531,6 +549,11 @@ client.on('message', async (message) => {
 
     // Notes
     if (text === '/note' && (!userStates[from] || userStates[from].stage === 'n_waiting_for_selection')) {
+        const identity = await identityCheck();
+        if (!identity || identity.responseCode !== "OK") {
+            await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
+            return;
+        }
         userStates[from] = { stage: 'n_waiting_for_content' };
         await client.sendMessage(from, "📝 Silakan isi catatan kamu di bawah ini.");
         return;
@@ -618,6 +641,8 @@ client.on('message', async (message) => {
 
         // Jalankan percobaan pertama
         insertDoaPagi();
+        // Reset state setelah selesai
+        delete userStates[from];
         return;
     }
     
@@ -692,6 +717,8 @@ client.on('message', async (message) => {
 
         // Jalankan percobaan pertama
         tryProcess();
+        // Reset state setelah selesai
+        delete userStates[from];
         return;
     }
 
