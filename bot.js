@@ -173,10 +173,15 @@ client.on('message', async (message) => {
         }
     
         const nama_home = userStates[from]?.userHomeName;
+        console.log(`DBG | nama_home : ${nama_home}`);
     
         const checkin = async (attempt = 1) => {
             try {
                 console.log(`🔄 Percobaan ke-${attempt} untuk check-in...`);
+                        
+                console.log(`DBG | id_user : ${userStates[from].userId}`);
+                console.log(`DBG | kode_home : ${userStates[from]?.userHomeCode}`);
+                console.log(`DBG | secret_key : ${text.split(' ')[1]}`);
     
                 const response = await axios.post(`${API_BASE_URL}/check_in_home.php`, {
                     id_user: userStates[from].userId,
@@ -557,6 +562,7 @@ client.on('message', async (message) => {
     }
 
     if (userStates[from]?.stage === 'n_waiting_for_content') {
+        const identity = await identityCheck();
         userStates[from].content = body;
         
         const saveNote = async (attempt = 1) => {
