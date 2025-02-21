@@ -98,19 +98,39 @@ client.on('message', async (message) => {
     }
 
     if (text === '/hi' || text === '/info') {
+        const identity = await identityCheck();
         const greeting = getGreeting();
-        await client.sendMessage(from, `🙋🏻‍♂️ Hi .. ${greeting} \n\n` +
-            `📌 *Terima kasih sudah terhubung dengan kami, kata kunci yang tersedia saat ini :*\n` +
+        
+        let message = '';
+        if (identity && identity.responseCode === "OK" && userStates[from].userName) {
+            message += `🙋🏻‍♂️ Hi ${userStates[from].userName}.. ${greeting} \n\n`;
+        } else {
+            message += `🙋🏻‍♂️ Hi .. ${greeting}, kamu belum terdaftar dalam sistem kami, untuk mengakses fitur lengkap pastikan kamu terdaftar sebagai home member kami ya. 😉 \n\n`;
+        }
+        
+        message += `📌 Terima kasih sudah terhubung dengan kami, silahkan masukan kata kunci dibawah ini ya :\n` +
             `* */hi* atau */info* → Memulai percakapan dan melihat kata kunci apa saja yang tersedia.\n` +
-            `* */event* → Melihat informasi kegiatan paling dekat.\n` +
-            `* */absensi* → Melihat persentase kehadiran doa pagi.\n` +
-            `* */birthday* → Melihat siapa saja yang akan berulangtahun dalam waktu dekat.\n` +
-            `* */sermonnote* → Membuat *catatan kotbah* (_connected to apps_).\n` +
-            `* */username* → Melihat username yang bisa kamu gunakan untuk login aplikasi *WL Singer* berbasis web.\n` +
-            `* */web* atau */app* → Link untuk membuka aplikasi *WL Singer* berbasis web .\n` +
-            `* untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi dihari tersebut.\n\n` +
-            `Jika butuh bantuan lebih lanjut, \nsilakan menghubungi *Andrie* di *08119320402*...\nGod Bless ✨`
-        );
+            `* */event* → Melihat informasi kegiatan HOME yang terdekat.\n` +
+            `* */birthday* → Melihat teman HOME mu yang akan berulangtahun dalam waktu dekat.\n` +
+            `* */web* → Shortcut untuk membuka Portal Home.\n` +
+            `* */username* → Melihat usernamemu untuk login ke Portal Home.\n`;
+        
+        if (userStates[from]?.userHomeCode === 'WLS') {
+            message += `* */absensi* → Melihat persentase kehadiran doa pagi.\n\n`;
+        }
+        
+        message += `📌 Kami juga menyediakan fitur yang terhubung ke Portal Home :\n` +
+            `* */sermonnote* → Membuat *catatan kotbah*.\n` +
+            `* */quiettime* → Membuat *quiet time journal*.\n` +
+            `* */note* → Membuat note baru.\n\n`;
+        
+        if (userStates[from]?.userHomeCode === 'WLS') {
+            message += `* Untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi (khusus wl singer).\n\n`;
+        }
+        
+        message += `Jika butuh bantuan lebih lanjut, \nsilakan menghubungi home leader masing masing ya\nGod Bless ✨`;
+        
+        await client.sendMessage(from, message);
         return;
     }
 
@@ -342,7 +362,8 @@ client.on('message', async (message) => {
     }
 
     // 🔹 Cek apakah user mengetik "/doa <id> <isi doa>"
-    const match = text.match(/^\/doa\s+(\S+)\s+(.+)$/i);
+    // const match = text.match(/^\/doa\s+(\S+)\s+(.+)$/i);
+    const match = text.match(/^\/doa\s+(\S+)\s+([\s\S]+)$/i);
 
     if (match) {
         const wl_singer_id = match[1].trim(); // Ambil ID WL/Singer
