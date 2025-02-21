@@ -172,9 +172,6 @@ client.on('message', async (message) => {
             return;
         }
     
-        const secret_key = text.split(' ')[1] || "";
-        const id_user = userStates[from].userId;
-        const kode_home = userStates[from]?.userHomeCode;
         const nama_home = userStates[from]?.userHomeName;
     
         const checkin = async (attempt = 1) => {
@@ -182,9 +179,9 @@ client.on('message', async (message) => {
                 console.log(`🔄 Percobaan ke-${attempt} untuk check-in...`);
     
                 const response = await axios.post(`${API_BASE_URL}/check_in_home.php`, {
-                    id_user,
-                    kode_home,
-                    secret_key
+                    id_user: userStates[from].userId,
+                    kode_home: userStates[from]?.userHomeCode,
+                    secret_key: text.split(' ')[1] || "";
                 }, {
                     headers: {
                         'User-Agent': 'Mozilla/5.0',
