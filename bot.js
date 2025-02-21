@@ -193,8 +193,10 @@ client.on('message', async (message) => {
     
                 if (response.data.status === "success") {
                     await client.sendMessage(from, `✅ Check-in berhasil! Welcome to Home ${nama_home}.`);
+                    delete userStates[from];
                 } else {
                     await client.sendMessage(from, `⚠️ Gagal check-in: ${response.data.message}`);
+                    delete userStates[from];
                 }
             } catch (error) {
                 console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
@@ -202,13 +204,12 @@ client.on('message', async (message) => {
                     setTimeout(() => checkin(attempt + 1), 2000);
                 } else {
                     await client.sendMessage(from, "⚠️ Terjadi kesalahan saat check-in. Silakan coba lagi nanti.");
+                    delete userStates[from];
                 }
             }
         };
     
         checkin();
-        // Reset state setelah selesai
-        delete userStates[from];
         return;
     }
     
@@ -263,9 +264,10 @@ client.on('message', async (message) => {
                         `📈 Persentase kehadiranmu: *${persentase}%*\n\n` +
                         `_${pesan}_`
                     );
-    
+                    delete userStates[from];
                 } else {
                     await client.sendMessage(from, `⚠️ *Error:* ${response.data.message}`);
+                    delete userStates[from];
                 }
     
             } catch (error) {
@@ -277,14 +279,13 @@ client.on('message', async (message) => {
                 } else {
                     // Jika sudah gagal 5 kali, kirim pesan error
                     await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data absensi. Silakan coba lagi nanti.");
+                    delete userStates[from];
                 }
             }
         };
     
         // Jalankan percobaan pertama
         fetchAbsensi();
-        // Reset state setelah selesai
-        delete userStates[from];
         return;
     }    
     
@@ -313,8 +314,10 @@ client.on('message', async (message) => {
                                         `Jangan sampai kelewatan yaaa, see you and Godbless!! 😊`;
     
                     await client.sendMessage(from, messageText);
+                    delete userStates[from];
                 } else {
                     await client.sendMessage(from, "⚠️ Belum ada event yang akan datang.");
+                    delete userStates[from];
                 }
     
             } catch (error) {
@@ -326,14 +329,13 @@ client.on('message', async (message) => {
                 } else {
                     // Jika sudah gagal 5 kali, kirim pesan error
                     await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data event. Silakan coba lagi nanti.");
+                    delete userStates[from];
                 }
             }
         };
     
         // Jalankan percobaan pertama
         fetchEvent();
-        // Reset state setelah selesai
-        delete userStates[from];
         return;
     }
     
@@ -361,16 +363,17 @@ client.on('message', async (message) => {
                 // messageText += "\n\n✨ Jangan lupa ucapkan selamat ya! 🎉";
 
                 await client.sendMessage(from, messageText);
+                delete userStates[from];
             } else {
                 await client.sendMessage(from, "⚠️ Tidak ada ulang tahun dalam waktu dekat.");
+                delete userStates[from];
             }
         } catch (error) {
             console.error("Error fetching birthdays:", error);
             await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data ulang tahun.");
+            delete userStates[from];
         }
         
-        // Reset state setelah selesai
-        delete userStates[from];
         return;
     }
     
@@ -443,8 +446,10 @@ client.on('message', async (message) => {
 
                 if (response.data.status === "success") {
                     await client.sendMessage(from, "✅ Catatan kotbah berhasil disimpan! \nTerus bangun kebiasaan baik ini ya 💞.");
+                    delete userStates[from];
                 } else {
                     throw new Error(response.data.message || "Gagal menyimpan sermon note.");
+                    delete userStates[from];
                 }
 
             } catch (error) {
@@ -457,15 +462,13 @@ client.on('message', async (message) => {
                 } else {
                     // Jika gagal 5 kali, kirim pesan error ke user
                     await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan catatan kotbahmu. Silakan coba lagi nanti.");
+                    delete userStates[from];
                 }
             }
         };
 
         // Jalankan function dengan retry
         await insertSermonNote();
-
-        // Reset state setelah selesai
-        delete userStates[from];
         return;
     }
     // end - sermon note
@@ -530,18 +533,19 @@ client.on('message', async (message) => {
                     httpsAgent: agent
                 });
                 await client.sendMessage(from, "✅ Renungan kamu berhasil disimpan! Teruslah bertumbuh dalam firman Tuhan 💞.");
+                delete userStates[from];
             } catch (error) {
                 console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
                 if (attempt < 5) {
                     setTimeout(() => saveQuietTime(attempt + 1), 2000);
                 } else {
                     await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan renungan kamu.");
+                    delete userStates[from];
                 }
             }
         };
 
         saveQuietTime();
-        delete userStates[from];
         return;
     }
 
@@ -552,13 +556,19 @@ client.on('message', async (message) => {
             await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
             return;
         }
-        userStates[from] = { stage: 'n_waiting_for_content' };
-        await client.sendMessage(from, "📝 Silakan isi catatan kamu di bawah ini.");
+        userStates[from] = { stage: 'n_waiting_for_title' };
+        await client.sendMessage(from, "📝 Silakan isi judul catatan kamu terlebih dahulu.");
         return;
     }
-
+    
+    if (userStates[from]?.stage === 'n_waiting_for_title') {
+        userStates[from].title = body;
+        userStates[from].stage = 'n_waiting_for_content';
+        await client.sendMessage(from, "✏️ Sekarang, silakan isi catatan kamu di bawah ini.");
+        return;
+    }
+    
     if (userStates[from]?.stage === 'n_waiting_for_content') {
-        const identity = await identityCheck();
         userStates[from].content = body;
         
         const saveNote = async (attempt = 1) => {
@@ -566,6 +576,7 @@ client.on('message', async (message) => {
                 console.log(`🔄 Percobaan ke-${attempt} untuk menyimpan Catatan...`);
                 await axios.post(`${API_BASE_URL}/insert_note.php`, {
                     id_user: userStates[from].userId,
+                    title_note: userStates[from].title,
                     content_note: userStates[from].content,
                 }, {
                     headers: {
@@ -575,16 +586,18 @@ client.on('message', async (message) => {
                     httpsAgent: agent
                 });
                 await client.sendMessage(from, "✅ Catatan kamu berhasil disimpan! 😊");
+                delete userStates[from];
             } catch (error) {
                 console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
                 if (attempt < 5) {
                     setTimeout(() => saveNote(attempt + 1), 2000);
                 } else {
                     await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan catatan kamu.");
+                    delete userStates[from];
                 }
             }
         };
-
+    
         saveNote();
         return;
     }
@@ -620,9 +633,11 @@ client.on('message', async (message) => {
                     );
 
                     await client.sendMessage(adminNumber, `📢 *${namaLengkap}* (${userPhoneNumber}) baru saja submit doa pagi pada *${now}*.`);
+                    delete userStates[from];
 
                 } else {
                     await client.sendMessage(from, `⚠️ *Gagal menyimpan doa pagi:* ${response.data.message}`);
+                    delete userStates[from];
                 }
 
             } catch (error) {
@@ -634,6 +649,7 @@ client.on('message', async (message) => {
                 } else {
                     // Jika sudah gagal 5 kali, kirim pesan error
                     await client.sendMessage(from, '⚠️ Terjadi kesalahan saat menyimpan doa pagi. Silakan coba lagi nanti.');
+                    delete userStates[from];
                 }
             }
         };
@@ -694,9 +710,11 @@ client.on('message', async (message) => {
                         );
                     } else {
                         await client.sendMessage(from, `⚠️ *Error:* ${insertResponse.data.message}`);
+                        delete userStates[from];
                     }
                 } else {
                     await client.sendMessage(from, `❌ Maaf, ID kamu tidak terdaftar dalam sistem. Mohon hubungi home leader masing-masing, terima kasih.`);
+                    delete userStates[from];
                 }
 
             } catch (error) {
@@ -708,6 +726,7 @@ client.on('message', async (message) => {
                 } else {
                     // Jika sudah gagal 5 kali, kirim pesan error
                     await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memproses permintaan. Silakan coba lagi nanti.');
+                    delete userStates[from];
                 }
             }
         };
