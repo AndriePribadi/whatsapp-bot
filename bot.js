@@ -529,7 +529,7 @@ client.on('message', async (message) => {
         return;
     }
 
-    if (userStates[from]?.stage === 'qt_waiting_for_actionplan') { {
+    if (userStates[from]?.stage === 'qt_waiting_for_actionplan') {
         const identity = await identityCheck();
         userStates[from].actionplan = body;
 
