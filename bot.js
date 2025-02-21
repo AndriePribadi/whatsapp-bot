@@ -62,7 +62,11 @@ client.on('message', async (message) => {
             const response = await axios.post(
                 `${API_BASE_URL}/get_user_by_phonenumber.php`,
                 { userPhoneNumber: userPhoneNumber },
-                { httpsAgent: agent }
+                { headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Content-Type': 'application/json'
+                },
+                httpsAgent: agent }
             );
             console.log(`Identity check response: ${JSON.stringify(response.data)}`); // Log the response
             if (response.data.responseCode === "OK") {
@@ -124,7 +128,11 @@ client.on('message', async (message) => {
             const response = await axios.post(
                 `${API_BASE_URL}/check_doapagi.php`,
                 { id_user: userStates[from].userId },
-                { httpsAgent: agent }
+                { headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Content-Type': 'application/json'
+                },
+                httpsAgent: agent }
             );
 
             if (response.data.status === "success") {
@@ -169,7 +177,12 @@ client.on('message', async (message) => {
             return;
         }
         try {
-            const response = await axios.get(`${API_BASE_URL}/event.php`, { httpsAgent: agent });
+            const response = await axios.get(`${API_BASE_URL}/event.php`, { 
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Content-Type': 'application/json'
+                },
+                httpsAgent: agent });
     
             if (response.data.status === "success") {
                 const eventDescription = response.data.deskripsi;
@@ -241,7 +254,11 @@ client.on('message', async (message) => {
                     content_sermonnote: userStates[from].content,
                     summary_sermonnote: userStates[from].summary,
                 },
-                { httpsAgent: agent }
+                { headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Content-Type': 'application/json'
+                },
+                httpsAgent: agent }
             );
             await client.sendMessage(from, "✅ Catatan kotbah berhasil disimpan! \nTerus bangun kebiasaan baik ini ya 💞.");
         } catch (error) {
@@ -258,7 +275,11 @@ client.on('message', async (message) => {
             const response = await axios.post(
                 `${API_BASE_URL}/insert_doapagi.php`,
                 { id_user: userStates[from].userId, content: body.trim() },
-                { httpsAgent: agent }
+                { headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Content-Type': 'application/json'
+                },
+                httpsAgent: agent }
             );
     
             if (response.data.status === "success") {
@@ -292,7 +313,11 @@ client.on('message', async (message) => {
             const response = await axios.post(
                 `${API_BASE_URL}/birthday.php`,
                 { kode_home: userStates[from].userHomeCode },
-                { httpsAgent: agent }
+                { headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Content-Type': 'application/json'
+                },
+                httpsAgent: agent }
             );
             
             if (response.data.status === "success") {
@@ -328,7 +353,11 @@ client.on('message', async (message) => {
             const response = await axios.post(
                 `${API_BASE_URL}/check_id.php`,
                 { wl_singer_id },
-                { httpsAgent: agent }
+                { headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Content-Type': 'application/json'
+                },
+                httpsAgent: agent }
             );
 
             const { responseCode, responseMessage1, responseMessage2 } = response.data;
@@ -338,7 +367,11 @@ client.on('message', async (message) => {
                 const insertResponse = await axios.post(
                     `${API_BASE_URL}/insert_doapagi_inject.php`,
                     { wl_singer_id: responseMessage2, content: content },
-                    { httpsAgent: agent }
+                    { headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Content-Type': 'application/json'
+                },
+                httpsAgent: agent }
                 );
 
                 if (insertResponse.data.status === "success") {
