@@ -634,6 +634,18 @@ client.on('message', async (message) => {
     }
 
     if (text.length > 20 && !text.startsWith('/') && (!userStates[from] || !userStates[from].stage)) {
+            
+        const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+        const date = new Date(now);
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const seconds = date.getSeconds();
+
+        // Validasi hanya antara 05:01:00 - 08:59:59
+        if (!((hours === 5 && minutes >= 01) || (hours >= 6 && hours < 9) || (hours === 8 && minutes <= 59 && seconds <= 59))) {
+            return;
+        }
+        
         const identity = await identityCheck();
         
         if (identity && identity.responseCode === "OK" && userStates[from]?.userName) {
