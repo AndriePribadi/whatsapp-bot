@@ -11,22 +11,6 @@ app.get('/health', (req, res) => res.status(200).send('Bot is running'));
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
-app.get('/bot_send_message', async (req, res) => {
-    const { no_tujuan, message } = req.query;
-    
-    if (!no_tujuan || !message) {
-        return res.status(400).json({ status: "error", message: "Missing parameters: no_tujuan and message are required." });
-    }
-
-    try {
-        await client.sendMessage(no_tujuan, message);
-        res.json({ status: "success", message: "Pesan berhasil dikirim." });
-    } catch (error) {
-        console.error("⚠️ Error saat mengirim pesan:", error.message);
-        res.status(500).json({ status: "error", message: "Gagal mengirim pesan." });
-    }
-});
-
 const agent = new https.Agent({ rejectUnauthorized: false });
 const userStates = {};
 const client = new Client({ authStrategy: new LocalAuth() });
@@ -118,13 +102,11 @@ client.on('message', async (message) => {
     
     if (text === '/username') {
         const identity = await identityCheck();
-        if (!identity || identity.responseCode !== "OK") {
+        if (!identity || identity.responseCode !== "OK" || !userStates[from]) {
             await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
             return;
         }
         await client.sendMessage(from, `👤 Username kamu adalah *${userStates[from].userUsername}*.`);
-        // Reset state setelah selesai
-        delete userStates[from];
         return;
     }
 
@@ -133,7 +115,7 @@ client.on('message', async (message) => {
         const greeting = getGreeting();
         
         let message = '';
-        if (identity && identity.responseCode === "OK" && userStates[from].userName) {
+        if (identity && identity.responseCode === "OK" && userStates[from]?.userName) {
             message += `🙋🏻‍♂️ Hi ${userStates[from].userName}.. ${greeting} \n\n`;
         } else {
             message += `🙋🏻‍♂️ Hi .. ${greeting}, kamu belum terdaftar dalam sistem kami, untuk mengakses fitur lengkap pastikan kamu terdaftar sebagai home member kami ya. 😉 \n\n`;
@@ -142,84 +124,30 @@ client.on('message', async (message) => {
         message += `📌 silahkan masukan kata kunci dibawah ini ya :\n` +
             `* */hi* → Memulai percakapan dan melihat kata kunci apa saja yang tersedia.\n` +
             `* */event* → Melihat informasi kegiatan HOME yang terdekat.\n` +
-            `* */birthday* → Melihat teman HOME mu yang akan berulangtahun dalam waktu dekat.\n\n`;
-        
-        message += `🏠 Kami juga menyediakan fitur yang terhubung ke Portal Home :\n` +
+            `* */birthday* → Melihat teman HOME mu yang akan berulangtahun dalam waktu dekat.\n` +
             `* */web* → Shortcut untuk membuka Portal Home.\n` +
-            `* */username* → Melihat username untuk login ke Portal Home.\n` +
+            `* */username* → Melihat username untuk login ke Portal Home.\n`;
+        
+        message += `📌 Kami juga menyediakan fitur yang terhubung ke Portal Home :\n` +
             `* */sermonnote* → Membuat *catatan kotbah*.\n` +
             `* */quiettime* → Membuat *quiet time journal*.\n` +
             `* */note* → Membuat note baru.\n\n`;
         
         if (userStates[from]?.userHomeCode === 'WLS') {
-            message += `🎤 Khusus untuk Home WL Singer, coba fitur ini ya :\n`;
-            message += `* */absensi* → Melihat persentase kehadiran doa pagi.\n`;
+            message += `🎤 Khusus untuk Home WL Singer, coba fitur ini ya :\n` +
+            message += `* */absensi* → Melihat persentase kehadiran doa pagi.\n\n`;
             message += `* Dan untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi (khusus wl singer).\n\n`;
         }
         
         message += `Jika butuh bantuan lebih lanjut, \nJangan ragu untuk menghubungi home leader masing masing ya\n Selamat berjuang! God Bless ✨`;
         
         await client.sendMessage(from, message);
-        // Reset state setelah selesai
-        delete userStates[from];
         return;
     }
-
-    if (text.startsWith('/checkin')) {
-        const identity = await identityCheck();
-        if (!identity || identity.responseCode !== "OK") {
-            await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing-masing, terima kasih.`);
-            return;
-        }
-    
-        const nama_home = userStates[from]?.userHomeName;
-        console.log(`DBG | nama_home : ${nama_home}`);
-    
-        const checkin = async (attempt = 1) => {
-            try {
-                console.log(`🔄 Percobaan ke-${attempt} untuk check-in...`);
-                        
-                console.log(`DBG | id_user : ${userStates[from].userId}`);
-                console.log(`DBG | kode_home : ${userStates[from]?.userHomeCode}`);
-                console.log(`DBG | secret_key : ${text.split(' ')[1]}`);
-    
-                const response = await axios.post(`${API_BASE_URL}/check_in_home.php`, {
-                    id_user: userStates[from].userId,
-                    kode_home: userStates[from]?.userHomeCode,
-                    secret_key: text.split(' ')[1] || "",
-                }, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0',
-                        'Content-Type': 'application/json'
-                    },
-                    httpsAgent: agent
-                });
-    
-                if (response.data.status === "success") {
-                    await client.sendMessage(from, `✅ Check-in berhasil! Welcome to Home ${nama_home}.`);
-                } else {
-                    await client.sendMessage(from, `⚠️ Gagal check-in: ${response.data.message}`);
-                }
-            } catch (error) {
-                console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
-                if (attempt < 5) {
-                    setTimeout(() => checkin(attempt + 1), 2000);
-                } else {
-                    await client.sendMessage(from, "⚠️ Terjadi kesalahan saat check-in. Silakan coba lagi nanti.");
-                }
-            }
-        };
-    
-        checkin();
-        // Reset state setelah selesai
-        delete userStates[from];
-        return;
-    }
-    
 
     if (text === '/absensi') {
         const identity = await identityCheck();
-        if (!identity || identity.responseCode !== "OK") {
+        if (!identity || identity.responseCode !== "OK" || !userStates[from]) {
             await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
             return;
         }
@@ -287,14 +215,12 @@ client.on('message', async (message) => {
     
         // Jalankan percobaan pertama
         fetchAbsensi();
-        // Reset state setelah selesai
-        delete userStates[from];
         return;
     }    
     
     if (text === '/event') {
         const identity = await identityCheck();
-        if (!identity || identity.responseCode !== "OK") {
+        if (!identity || identity.responseCode !== "OK" || !userStates[from]) {
             await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
             return;
         }
@@ -336,54 +262,14 @@ client.on('message', async (message) => {
     
         // Jalankan percobaan pertama
         fetchEvent();
-        // Reset state setelah selesai
-        delete userStates[from];
         return;
     }
-    
-    if (text === '/birthday') {
-        const identity = await identityCheck();
-        if (!identity || identity.responseCode !== "OK") {
-            await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
-            return;
-        }
-        try {
-            const response = await axios.post(
-                `${API_BASE_URL}/birthday.php`,
-                { kode_home: userStates[from].userHomeCode },
-                { httpsAgent: agent }
-            );
-
-            if (response.data.status === "success") {
-                const birthdayList = response.data.birthdays;
-
-                let messageText = "🎂 *Upcoming Birthdays!* 🎂\n";
-                birthdayList.forEach((b, index) => {
-                    messageText += `\n${index + 1}. *${b.nama_lengkap}* - ${b.tanggal_lahir}`;
-                });
-
-                // messageText += "\n\n✨ Jangan lupa ucapkan selamat ya! 🎉";
-
-                await client.sendMessage(from, messageText);
-            } else {
-                await client.sendMessage(from, "⚠️ Tidak ada ulang tahun dalam waktu dekat.");
-            }
-        } catch (error) {
-            console.error("Error fetching birthdays:", error);
-            await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data ulang tahun.");
-        }
-        
-        // Reset state setelah selesai
-        delete userStates[from];
-        return;
-    }
-    
     
     // scope untuk sermon note 
     // sermon note - start 
     if (text === '/sermonnote' && (!userStates[from] || userStates[from].stage === 'waiting_for_selection')) {
         const identity = await identityCheck();
-        if (!identity || identity.responseCode !== "OK") {
+        if (!identity || identity.responseCode !== "OK" || !userStates[from]) {
             await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
             return;
         }
@@ -477,7 +363,7 @@ client.on('message', async (message) => {
     // Quiet Time
     if (text === '/quiettime' && (!userStates[from] || userStates[from].stage === 'qt_waiting_for_selection')) {
         const identity = await identityCheck();
-        if (!identity || identity.responseCode !== "OK") {
+        if (!identity || identity.responseCode !== "OK" || !userStates[from]) {
             await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
             return;
         }
@@ -552,7 +438,7 @@ client.on('message', async (message) => {
     // Notes
     if (text === '/note' && (!userStates[from] || userStates[from].stage === 'n_waiting_for_selection')) {
         const identity = await identityCheck();
-        if (!identity || identity.responseCode !== "OK") {
+        if (!identity || identity.responseCode !== "OK" || !userStates[from]) {
             await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
             return;
         }
@@ -562,7 +448,6 @@ client.on('message', async (message) => {
     }
 
     if (userStates[from]?.stage === 'n_waiting_for_content') {
-        const identity = await identityCheck();
         userStates[from].content = body;
         
         const saveNote = async (attempt = 1) => {
@@ -597,6 +482,11 @@ client.on('message', async (message) => {
     
    // Doa pagi direct input oleh setiap pengguna (jika tidak sedang dalam sesi /doa atau /sermonnote)
     if (text.length > 20 && !text.startsWith('/') && (!userStates[from] || !userStates[from].stage)) {
+        const identity = await identityCheck();
+        if (!identity || identity.responseCode !== "OK" || !userStates[from]) {
+            await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
+            return;
+        }
         const insertDoaPagi = async (attempt = 1) => {
             try {
                 console.log(`🔄 Percobaan ke-${attempt} untuk menyimpan doa pagi...`);
@@ -644,8 +534,6 @@ client.on('message', async (message) => {
 
         // Jalankan percobaan pertama
         insertDoaPagi();
-        // Reset state setelah selesai
-        delete userStates[from];
         return;
     }
     
@@ -720,8 +608,6 @@ client.on('message', async (message) => {
 
         // Jalankan percobaan pertama
         tryProcess();
-        // Reset state setelah selesai
-        delete userStates[from];
         return;
     }
 
