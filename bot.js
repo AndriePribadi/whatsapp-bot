@@ -502,21 +502,21 @@ client.on('message', async (message) => {
             return;
         }
 
-        userStates[from].source = body;
+        userStates[from].category = body;
         userStates[from].stage = 'qt_waiting_for_source';
         await client.sendMessage(from, "📜 Buku dan bagian apa yang sedang kamu baca atau renungkan?");
         return;
     }
 
     if (userStates[from]?.stage === 'qt_waiting_for_source') {
-        userStates[from].verse = body;
+        userStates[from].source = body;
         userStates[from].stage = 'qt_waiting_for_verse';
         await client.sendMessage(from, "✨ Kasih aku kutipan yang akan selalu kamu ingat dari pembacaan hari ini ya");
         return;
     }
 
     if (userStates[from]?.stage === 'qt_waiting_for_verse') {
-        userStates[from].content = body;
+        userStates[from].verse = body;
         userStates[from].stage = 'qt_waiting_for_content';
         await client.sendMessage(from, "💭 Refleksi dari pembacaan kamu hari ini");
         return;
@@ -529,7 +529,8 @@ client.on('message', async (message) => {
         return;
     }
 
-    if (userStates[from]?.stage === 'qt_waiting_for_actionplan') {
+    if (userStates[from]?.stage === 'qt_waiting_for_actionplan') { {
+        const identity = await identityCheck();
         userStates[from].actionplan = body;
 
         const saveQuietTime = async (attempt = 1) => {
