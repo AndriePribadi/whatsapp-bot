@@ -47,7 +47,7 @@ client.on('message', async (message) => {
 
     if (text === '/web' || text === '/app') {
         await client.sendMessage(from, 
-            `🌐 *Our Website* 🌐\n\n` +
+            `🌐 *PORTAL HOME* 🌐\n\n` +
             `Silahkan click link dibawah ini ya\n` +
             `https://mrpribadi.com/home/\n\n` +
             `Semoga informasi ini membantu. 😊`
@@ -56,9 +56,10 @@ client.on('message', async (message) => {
     }
 
     // Identity check for other commands
-    const identityCheck = async () => {
+    const identityCheck = async (attempt = 1) => {
         try {
-            console.log(`Checking identity for phone number: ${userPhoneNumber}`); // Log the phone number being sent
+            console.log(`🔍 [Percobaan ${attempt}] Mengecek identitas untuk nomor: ${userPhoneNumber}`);
+    
             const response = await axios.post(
                 `${API_BASE_URL}/get_user_by_phonenumber.php`,
                 { userPhoneNumber: userPhoneNumber },
@@ -68,7 +69,9 @@ client.on('message', async (message) => {
                 },
                 httpsAgent: agent }
             );
-            console.log(`Identity check response: ${JSON.stringify(response.data)}`); // Log the response
+    
+            console.log(`✅ Identity check response: ${JSON.stringify(response.data)}`);
+    
             if (response.data.responseCode === "OK") {
                 userStates[from] = {
                     ...userStates[from],
@@ -79,14 +82,24 @@ client.on('message', async (message) => {
                     userUsername: response.data.username
                 };
             }
+            
             return response.data;
+    
         } catch (error) {
-            console.error("Error checking identity:", error);
-            await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memeriksa identitas.');
-            return null;
+            console.error(`⚠️ [Percobaan ${attempt}] Error saat cek identitas:`, error.message);
+    
+            if (attempt < 5) {
+                // Coba lagi setelah 2 detik
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                return identityCheck(attempt + 1);
+            } else {
+                // Jika gagal 5 kali, kirim pesan error ke user
+                await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memeriksa identitas. Silakan coba lagi nanti.');
+                return null;
+            }
         }
     };
-
+    
     if (text === '/username') {
         const identity = await identityCheck();
         if (!identity || identity.responseCode !== "OK") {
@@ -108,16 +121,12 @@ client.on('message', async (message) => {
             message += `🙋🏻‍♂️ Hi .. ${greeting}, kamu belum terdaftar dalam sistem kami, untuk mengakses fitur lengkap pastikan kamu terdaftar sebagai home member kami ya. 😉 \n\n`;
         }
         
-        message += `📌 Terima kasih sudah terhubung dengan kami, silahkan masukan kata kunci dibawah ini ya :\n` +
-            `* */hi* atau */info* → Memulai percakapan dan melihat kata kunci apa saja yang tersedia.\n` +
+        message += `📌 silahkan masukan kata kunci dibawah ini ya :\n` +
+            `* */hi* → Memulai percakapan dan melihat kata kunci apa saja yang tersedia.\n` +
             `* */event* → Melihat informasi kegiatan HOME yang terdekat.\n` +
             `* */birthday* → Melihat teman HOME mu yang akan berulangtahun dalam waktu dekat.\n` +
             `* */web* → Shortcut untuk membuka Portal Home.\n` +
-            `* */username* → Melihat usernamemu untuk login ke Portal Home.\n`;
-        
-        if (userStates[from]?.userHomeCode === 'WLS') {
-            message += `* */absensi* → Melihat persentase kehadiran doa pagi.\n\n`;
-        }
+            `* */username* → Melihat username untuk login ke Portal Home.\n`;
         
         message += `📌 Kami juga menyediakan fitur yang terhubung ke Portal Home :\n` +
             `* */sermonnote* → Membuat *catatan kotbah*.\n` +
@@ -125,10 +134,12 @@ client.on('message', async (message) => {
             `* */note* → Membuat note baru.\n\n`;
         
         if (userStates[from]?.userHomeCode === 'WLS') {
-            message += `* Untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi (khusus wl singer).\n\n`;
+            message += `🎤 Khusus untuk Home WL Singer, coba fitur ini ya :\n` +
+            message += `* */absensi* → Melihat persentase kehadiran doa pagi.\n\n`;
+            message += `* Dan untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi (khusus wl singer).\n\n`;
         }
         
-        message += `Jika butuh bantuan lebih lanjut, \nsilakan menghubungi home leader masing masing ya\nGod Bless ✨`;
+        message += `Jika butuh bantuan lebih lanjut, \nJangan ragu untuk menghubungi home leader masing masing ya\n Selamat berjuang! God Bless ✨`;
         
         await client.sendMessage(from, message);
         return;
@@ -141,54 +152,71 @@ client.on('message', async (message) => {
             return;
         }
         if (userStates[from].userHomeCode !== "WLS") {
-            await client.sendMessage(from, `❌ Maaf, fitur ini hanya tersedia untuk home WLS.`);
+            await client.sendMessage(from, `❌ Maaf, fitur ini hanya tersedia untuk home WL Singer.`);
             return;
         }
-        try {
-            const response = await axios.post(
-                `${API_BASE_URL}/check_doapagi.php`,
-                { id_user: userStates[from].userId },
-                { headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Content-Type': 'application/json'
-                },
-                httpsAgent: agent }
-            );
-
-            if (response.data.status === "success") {
-                const jumlahKehadiran = response.data.jumlah_kehadiran;
-                const today = new Date();
-                const hariDalamBulan = today.getDate(); // Jumlah hari berjalan dalam bulan ini
-
-                // 🔹 Hitung persentase kehadiran
-                const persentase = ((jumlahKehadiran / hariDalamBulan) * 100).toFixed(2);
-
-                let pesan = "";
-                if(persentase < 60){
-                    pesan = "Yuk, kamu pasti lebih rajin lagi dalam mengikuti doa pagi ini 🤗";
-                }else if(persentase >= 60 && persentase < 80){
-                    pesan = "Wah sudah cukup baik nih, terus tingkatkan ya kerajinanmu 🤗";
-                }else{
-                    pesan = "Kamu luar biasa! Yuk terus pertahankan kerajinanmu ini ya 🤗";
-                }
-
-                await client.sendMessage(from, 
-                    `📊 *Absensi Doa Pagi*\n\n` +
-                    `📅 Bulan *${today.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}*\n` +
-                    `✅ Jumlah kehadiranmu: *${jumlahKehadiran} hari*\n` +
-                    `📆 Total hari berjalan: *${hariDalamBulan} hari*\n` +
-                    `📈 Persentase kehadiranmu: *${persentase}%*\n\n` +
-                    `_${pesan}_`
+    
+        const fetchAbsensi = async (attempt = 1) => {
+            try {
+                console.log(`🔄 Percobaan ke-${attempt} untuk mengambil data absensi...`);
+    
+                const response = await axios.post(
+                    `${API_BASE_URL}/check_doapagi.php`,
+                    { id_user: userStates[from].userId },
+                    { headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                        'Content-Type': 'application/json'
+                    },
+                    httpsAgent: agent }
                 );
-            } else {
-                await client.sendMessage(from, `⚠️ *Error:* ${response.data.message}`);
+    
+                if (response.data.status === "success") {
+                    const jumlahKehadiran = response.data.jumlah_kehadiran;
+                    const today = new Date();
+                    const hariDalamBulan = today.getDate(); // Jumlah hari berjalan dalam bulan ini
+    
+                    // 🔹 Hitung persentase kehadiran
+                    const persentase = ((jumlahKehadiran / hariDalamBulan) * 100).toFixed(2);
+    
+                    let pesan = "";
+                    if (persentase < 60) {
+                        pesan = "Yuk, kamu pasti lebih rajin lagi dalam mengikuti doa pagi ini 🤗";
+                    } else if (persentase >= 60 && persentase < 80) {
+                        pesan = "Wah sudah cukup baik nih, terus tingkatkan ya kerajinanmu 🤗";
+                    } else {
+                        pesan = "Kamu luar biasa! Yuk terus pertahankan kerajinanmu ini ya 🤗";
+                    }
+    
+                    await client.sendMessage(from, 
+                        `📊 *Absensi Doa Pagi*\n\n` +
+                        `📅 Bulan *${today.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}*\n` +
+                        `✅ Jumlah kehadiranmu: *${jumlahKehadiran} hari*\n` +
+                        `📆 Total hari berjalan: *${hariDalamBulan} hari*\n` +
+                        `📈 Persentase kehadiranmu: *${persentase}%*\n\n` +
+                        `_${pesan}_`
+                    );
+    
+                } else {
+                    await client.sendMessage(from, `⚠️ *Error:* ${response.data.message}`);
+                }
+    
+            } catch (error) {
+                console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
+    
+                if (attempt < 5) {
+                    // Coba lagi setelah 2 detik
+                    setTimeout(() => fetchAbsensi(attempt + 1), 2000);
+                } else {
+                    // Jika sudah gagal 5 kali, kirim pesan error
+                    await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data absensi. Silakan coba lagi nanti.");
+                }
             }
-        } catch (error) {
-            console.error("Error fetching attendance:", error);
-            await client.sendMessage(from, '⚠️ Terjadi kesalahan saat mengambil data absensi.');
-        }
+        };
+    
+        // Jalankan percobaan pertama
+        fetchAbsensi();
         return;
-    }
+    }    
     
     if (text === '/event') {
         const identity = await identityCheck();
@@ -196,27 +224,44 @@ client.on('message', async (message) => {
             await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
             return;
         }
-        try {
-            const response = await axios.get(`${API_BASE_URL}/event.php`, { 
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Content-Type': 'application/json'
-                },
-                httpsAgent: agent });
     
-            if (response.data.status === "success") {
-                const eventDescription = response.data.deskripsi;
-                const messageText = `📅 *UPCOMING EVENT!* 📅\n\n${eventDescription}\n\n` +
-                                    `Ikuti terus kegiatan kami ya, see you and Godbless!! 😊`
+        const fetchEvent = async (attempt = 1) => {
+            try {
+                console.log(`🔄 Percobaan ke-${attempt} untuk mengambil data event...`);
     
-                await client.sendMessage(from, messageText);
-            } else {
-                await client.sendMessage(from, "⚠️ Belum ada event yang akan datang.");
+                const response = await axios.get(`${API_BASE_URL}/event.php`, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                        'Content-Type': 'application/json'
+                    },
+                    httpsAgent: agent
+                });
+    
+                if (response.data.status === "success") {
+                    const eventDescription = response.data.deskripsi;
+                    const messageText = `📅 *UPCOMING EVENT!* 📅\n\n${eventDescription}\n` +
+                                        `Jangan sampai kelewatan yaaa, see you and Godbless!! 😊`;
+    
+                    await client.sendMessage(from, messageText);
+                } else {
+                    await client.sendMessage(from, "⚠️ Belum ada event yang akan datang.");
+                }
+    
+            } catch (error) {
+                console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
+    
+                if (attempt < 5) {
+                    // Coba lagi setelah 2 detik
+                    setTimeout(() => fetchEvent(attempt + 1), 2000);
+                } else {
+                    // Jika sudah gagal 5 kali, kirim pesan error
+                    await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data event. Silakan coba lagi nanti.");
+                }
             }
-        } catch (error) {
-            console.error("Error fetching event:", error);
-            await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data event.");
-        }
+        };
+    
+        // Jalankan percobaan pertama
+        fetchEvent();
         return;
     }
     
@@ -263,156 +308,294 @@ client.on('message', async (message) => {
 
     if (userStates[from]?.stage === 'waiting_for_summary') {
         userStates[from].summary = body;
-        try {
-            await axios.post(
-                `${API_BASE_URL}/insert_sermonnote.php`,
-                {
-                    id_user: userStates[from].userId,
-                    church_sermonnote: userStates[from].church,
-                    speaker_sermonnote: userStates[from].speaker,
-                    titlesermon_sermonnote: userStates[from].title,
-                    content_sermonnote: userStates[from].content,
-                    summary_sermonnote: userStates[from].summary,
-                },
-                { headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Content-Type': 'application/json'
-                },
-                httpsAgent: agent }
-            );
-            await client.sendMessage(from, "✅ Catatan kotbah berhasil disimpan! \nTerus bangun kebiasaan baik ini ya 💞.");
-        } catch (error) {
-            await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan catatan kotbahmu.");
-        }
+        
+        // Function untuk mencoba insert sermon note dengan retry
+        const insertSermonNote = async (attempt = 1) => {
+            try {
+                console.log(`🔄 [Percobaan ${attempt}] Menyimpan sermon note...`);
+                
+                const response = await axios.post(
+                    `${API_BASE_URL}/insert_sermonnote.php`,
+                    {
+                        id_user: userStates[from].userId,
+                        church_sermonnote: userStates[from].church,
+                        speaker_sermonnote: userStates[from].speaker,
+                        titlesermon_sermonnote: userStates[from].title,
+                        content_sermonnote: userStates[from].content,
+                        summary_sermonnote: userStates[from].summary,
+                    },
+                    { headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                        'Content-Type': 'application/json'
+                    },
+                    httpsAgent: agent }
+                );
+
+                if (response.data.status === "success") {
+                    await client.sendMessage(from, "✅ Catatan kotbah berhasil disimpan! \nTerus bangun kebiasaan baik ini ya 💞.");
+                } else {
+                    throw new Error(response.data.message || "Gagal menyimpan sermon note.");
+                }
+
+            } catch (error) {
+                console.error(`⚠️ [Percobaan ${attempt}] Error saat menyimpan sermon note:`, error.message);
+
+                if (attempt < 5) {
+                    // Coba lagi setelah 2 detik
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    return insertSermonNote(attempt + 1);
+                } else {
+                    // Jika gagal 5 kali, kirim pesan error ke user
+                    await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan catatan kotbahmu. Silakan coba lagi nanti.");
+                }
+            }
+        };
+
+        // Jalankan function dengan retry
+        await insertSermonNote();
+
+        // Reset state setelah selesai
         delete userStates[from];
         return;
     }
     // end - sermon note
-    
-    // Doa pagi direct input oleh setiap pengguna (jika tidak sedang dalam sesi /doa atau /sermonnote)
-    if (text.length > 20 && !text.startsWith('/') && (!userStates[from] || !userStates[from].stage)) {
-        try {
-            const response = await axios.post(
-                `${API_BASE_URL}/insert_doapagi.php`,
-                { id_user: userStates[from].userId, content: body.trim() },
-                { headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Content-Type': 'application/json'
-                },
-                httpsAgent: agent }
-            );
-    
-            if (response.data.status === "success") {
-                const namaLengkap = userStates[from].userName;
-                const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-    
-                await client.sendMessage(from, 
-                    `✅ *Terima kasih, ${namaLengkap}!* Doa pagi kamu sudah diterima. \n\n` +
-                    `_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n` +
-                    `✨ *Tuhan Yesus memberkati!* 🥳`
-                );
-    
-                await client.sendMessage(adminNumber, `📢 *${namaLengkap}* (${userPhoneNumber}) baru saja submit doa pagi pada *${now}*.`);
-            } else {
-                await client.sendMessage(from, `⚠️ *Gagal menyimpan doa pagi:* ${response.data.message}`);
-            }
-        } catch (error) {
-            console.error("Error submitting doa pagi:", error);
-            await client.sendMessage(from, '⚠️ Terjadi kesalahan saat menyimpan data.');
-        }
+
+    // Quiet Time
+    if (text === '/quiettime' && (!userStates[from] || userStates[from].stage === 'qt_waiting_for_selection')) {
+        userStates[from] = { stage: 'qt_waiting_for_source' };
+        await client.sendMessage(from, "📖 Hai, wah aku senang sekali kamu mau membuat journal saat teduh kamu,\nKalau aku boleh tau, apa yang sekarang kamu baca atau renungkan?\n1. Bible\n2. Daily Devotion\n3. Book\n4. Other\nSilahkan jawab dengan memasukkan angkanya saja ya...");
         return;
     }
-    
-    if (text === '/birthday') {
-        const identity = await identityCheck();
-        if (!identity || identity.responseCode !== "OK") {
-            await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
+
+    if (userStates[from]?.stage === 'qt_waiting_for_source') {
+        const validOptions = ['1', '2', '3', '4'];
+
+        if (!validOptions.includes(body.trim())) {
+            await client.sendMessage(from, "⚠️ Maaf, format yang kamu masukkan tidak sesuai. Silakan pilih dengan angka 1, 2, 3, atau 4.");
             return;
         }
-        try {
-            const response = await axios.post(
-                `${API_BASE_URL}/birthday.php`,
-                { kode_home: userStates[from].userHomeCode },
-                { headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Content-Type': 'application/json'
-                },
-                httpsAgent: agent }
-            );
-            
-            if (response.data.status === "success") {
-                const birthdayList = response.data.birthdays;
 
-                let messageText = "🎂 *Upcoming Birthdays!* 🎂\n";
-                birthdayList.forEach((b, index) => {
-                    messageText += `\n${index + 1}. *${b.nama_lengkap}* - ${b.tanggal_lahir}`;
-                });
-
-                // messageText += "\n\n✨ Jangan lupa ucapkan selamat ya! 🎉";
-
-                await client.sendMessage(from, messageText);
-            } else {
-                await client.sendMessage(from, "⚠️ Tidak ada ulang tahun dalam waktu dekat.");
-            }
-        } catch (error) {
-            console.error("Error fetching birthdays:", error);
-            await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data ulang tahun.");
-        }
+        userStates[from].source = body;
+        userStates[from].stage = 'qt_waiting_for_verse';
+        await client.sendMessage(from, "📜 Apa buku yang kamu baca atau renungkan?");
         return;
     }
+
+    if (userStates[from]?.stage === 'qt_waiting_for_verse') {
+        userStates[from].verse = body;
+        userStates[from].stage = 'qt_waiting_for_reflection';
+        await client.sendMessage(from, "💭 Apa yang kamu dapat dari pembacaan ini?");
+        return;
+    }
+
+    if (userStates[from]?.stage === 'qt_waiting_for_reflection') {
+        userStates[from].reflection = body;
+        userStates[from].stage = 'qt_waiting_for_actionplan';
+        await client.sendMessage(from, "🎯 Apa yang harus kamu terapkan dalam hidup ini setelah membacanya?");
+        return;
+    }
+
+    if (userStates[from]?.stage === 'qt_waiting_for_actionplan') {
+        userStates[from].actionplan = body;
+
+        const saveQuietTime = async (attempt = 1) => {
+            try {
+                console.log(`🔄 Percobaan ke-${attempt} untuk menyimpan Quiet Time...`);
+                await axios.post(`${API_BASE_URL}/insert_quiettime.php`, {
+                    id_user: userStates[from].userId,
+                    source_quiettime: userStates[from].source,
+                    verse_quiettime: userStates[from].verse,
+                    reflection_quiettime: userStates[from].reflection,
+                    actionplan_quiettime: userStates[from].actionplan,
+                }, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0',
+                        'Content-Type': 'application/json'
+                    },
+                    httpsAgent: agent
+                });
+                await client.sendMessage(from, "✅ Renungan kamu berhasil disimpan! Teruslah bertumbuh dalam firman Tuhan 💞.");
+            } catch (error) {
+                console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
+                if (attempt < 5) {
+                    setTimeout(() => saveQuietTime(attempt + 1), 2000);
+                } else {
+                    await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan renungan kamu.");
+                }
+            }
+        };
+
+        saveQuietTime();
+        delete userStates[from];
+        return;
+    }
+
+    // Notes
+    if (text === '/note' && (!userStates[from] || userStates[from].stage === 'n_waiting_for_selection')) {
+        userStates[from] = { stage: 'n_waiting_for_content' };
+        await client.sendMessage(from, "📝 Silakan isi catatan kamu di bawah ini.");
+        return;
+    }
+
+    if (userStates[from]?.stage === 'n_waiting_for_content') {
+        userStates[from].content = body;
+        
+        const saveNote = async (attempt = 1) => {
+            try {
+                console.log(`🔄 Percobaan ke-${attempt} untuk menyimpan Catatan...`);
+                await axios.post(`${API_BASE_URL}/insert_note.php`, {
+                    id_user: userStates[from].userId,
+                    content_note: userStates[from].content,
+                }, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0',
+                        'Content-Type': 'application/json'
+                    },
+                    httpsAgent: agent
+                });
+                await client.sendMessage(from, "✅ Catatan kamu berhasil disimpan! 😊");
+            } catch (error) {
+                console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
+                if (attempt < 5) {
+                    setTimeout(() => saveNote(attempt + 1), 2000);
+                } else {
+                    await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan catatan kamu.");
+                }
+            }
+        };
+
+        saveNote();
+        delete userStates[from];
+        return;
+    }
+
+    
+   // Doa pagi direct input oleh setiap pengguna (jika tidak sedang dalam sesi /doa atau /sermonnote)
+    if (text.length > 20 && !text.startsWith('/') && (!userStates[from] || !userStates[from].stage)) {
+        const insertDoaPagi = async (attempt = 1) => {
+            try {
+                console.log(`🔄 Percobaan ke-${attempt} untuk menyimpan doa pagi...`);
+
+                const response = await axios.post(
+                    `${API_BASE_URL}/insert_doapagi.php`,
+                    { id_user: userStates[from].userId, content: body.trim() },
+                    {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                            'Content-Type': 'application/json'
+                        },
+                        httpsAgent: agent
+                    }
+                );
+
+                if (response.data.status === "success") {
+                    const namaLengkap = userStates[from].userName;
+                    const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+
+                    await client.sendMessage(from, 
+                        `✅ *Terima kasih, ${namaLengkap}!* Doa pagi kamu sudah diterima. \n\n` +
+                        `_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n` +
+                        `✨ *Tuhan Yesus memberkati!* 🥳`
+                    );
+
+                    await client.sendMessage(adminNumber, `📢 *${namaLengkap}* (${userPhoneNumber}) baru saja submit doa pagi pada *${now}*.`);
+
+                } else {
+                    await client.sendMessage(from, `⚠️ *Gagal menyimpan doa pagi:* ${response.data.message}`);
+                }
+
+            } catch (error) {
+                console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
+
+                if (attempt < 5) {
+                    // Coba lagi setelah 2 detik
+                    setTimeout(() => insertDoaPagi(attempt + 1), 2000);
+                } else {
+                    // Jika sudah gagal 5 kali, kirim pesan error
+                    await client.sendMessage(from, '⚠️ Terjadi kesalahan saat menyimpan doa pagi. Silakan coba lagi nanti.');
+                }
+            }
+        };
+
+        // Jalankan percobaan pertama
+        insertDoaPagi();
+        return;
+    }
+    
 
     // 🔹 Cek apakah user mengetik "/doa <id> <isi doa>"
     // const match = text.match(/^\/doa\s+(\S+)\s+(.+)$/i);
     const match = text.match(/^\/doa\s+(\S+)\s+([\s\S]+)$/i);
 
     if (match) {
-        const wl_singer_id = match[1].trim(); // Ambil ID WL/Singer
-        const content = match[2].trim(); // Ambil isi doa
+        const wl_singer_id = match[1].trim();
+        const content = match[2].trim();
 
-        try {
-            // Periksa apakah ID WL/Singer valid
-            const response = await axios.post(
-                `${API_BASE_URL}/check_id.php`,
-                { wl_singer_id },
-                { headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Content-Type': 'application/json'
-                },
-                httpsAgent: agent }
-            );
+        // Fungsi untuk mencoba proses dengan retry sampai 5 kali
+        const tryProcess = async (attempt = 1) => {
+            try {
+                console.log(`🔄 Percobaan ke-${attempt} untuk memproses doa...`);
 
-            const { responseCode, responseMessage1, responseMessage2 } = response.data;
-
-            if (responseCode === "OK") {
-                // Langsung insert doa karena formatnya sudah lengkap
-                const insertResponse = await axios.post(
-                    `${API_BASE_URL}/insert_doapagi_inject.php`,
-                    { wl_singer_id: responseMessage2, content: content },
-                    { headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Content-Type': 'application/json'
-                },
-                httpsAgent: agent }
+                // Periksa apakah ID WL/Singer valid
+                const response = await axios.post(
+                    `${API_BASE_URL}/check_id.php`,
+                    { wl_singer_id },
+                    {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                            'Content-Type': 'application/json'
+                        },
+                        httpsAgent: agent
+                    }
                 );
 
-                if (insertResponse.data.status === "success") {
-                    await client.sendMessage(from, 
-                        `✅ *Terima kasih, ${responseMessage1}!* \n` +
-                        `Doa pagi kamu telah kami terima. \n\n` +
-                        `*_Selamat beraktivitas dan tetap jadi berkat!_* ✨`
-                    );
-                } else {
-                    await client.sendMessage(from, `⚠️ *Error:* ${insertResponse.data.message}`);
-                }
-            } else {
-                await client.sendMessage(from, `❌ Maaf, ID kamu tidak terdaftar dalam sistem. Mohon hubungi home leader masing-masing, terima kasih.`);
-            }
-        } catch (error) {
-            await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memproses permintaan.');
-        }
+                const { responseCode, responseMessage1, responseMessage2 } = response.data;
 
+                if (responseCode === "OK") {
+                    // Jika ID valid, lanjut insert doa
+                    const insertResponse = await axios.post(
+                        `${API_BASE_URL}/insert_doapagi_inject.php`,
+                        { wl_singer_id: responseMessage2, content: content },
+                        {
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                                'Content-Type': 'application/json'
+                            },
+                            httpsAgent: agent
+                        }
+                    );
+
+                    if (insertResponse.data.status === "success") {
+                        await client.sendMessage(from,
+                            `✅ *Terima kasih, ${responseMessage1}!* \n` +
+                            `Doa pagi kamu telah kami terima. \n\n` +
+                            `*_Selamat beraktivitas dan tetap jadi berkat!_* ✨`
+                        );
+                    } else {
+                        await client.sendMessage(from, `⚠️ *Error:* ${insertResponse.data.message}`);
+                    }
+                } else {
+                    await client.sendMessage(from, `❌ Maaf, ID kamu tidak terdaftar dalam sistem. Mohon hubungi home leader masing-masing, terima kasih.`);
+                }
+
+            } catch (error) {
+                console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
+
+                if (attempt < 5) {
+                    // Coba lagi setelah 2 detik
+                    setTimeout(() => tryProcess(attempt + 1), 2000);
+                } else {
+                    // Jika sudah gagal 5 kali, kirim pesan error
+                    await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memproses permintaan. Silakan coba lagi nanti.');
+                }
+            }
+        };
+
+        // Jalankan percobaan pertama
+        tryProcess();
         return;
     }
+
     
 });
 
