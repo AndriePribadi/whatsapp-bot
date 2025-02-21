@@ -643,10 +643,10 @@ client.on('message', async (message) => {
         const seconds = date.getSeconds();
         
         // Validasi hanya antara 00:00:01 - 08:59:59
-        if (!(hours >= 0 && hours < 9)) {
-            console.log(` Jam doa pagi tidak valid ...`);
-            return;
-        }
+        // if (!(hours >= 0 && hours < 9)) {
+        //     console.log(` Jam doa pagi tidak valid ...`);
+        //     return;
+        // }
         console.log(` process doa pagi ...`);
         
         const identity = await identityCheck();
