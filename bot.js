@@ -192,7 +192,7 @@ client.on('message', async (message) => {
                 });
     
                 if (response.data.status === "success") {
-                    await client.sendMessage(from, `✅ Check-in berhasil! Welcome to Home ${nama_home}.`);
+                    await client.sendMessage(from, `✅ Check-in berhasil! Welcome to ${nama_home}.`);
                     delete userStates[from];
                 } else {
                     await client.sendMessage(from, `⚠️ Gagal check-in: ${response.data.message}`);
@@ -426,6 +426,13 @@ client.on('message', async (message) => {
         const insertSermonNote = async (attempt = 1) => {
             try {
                 console.log(`🔄 [Percobaan ${attempt}] Menyimpan sermon note...`);
+                        
+                console.log(`DBG | id_user : ${userStates[from].userId}`);
+                console.log(`DBG | church_sermonnote : ${userStates[from].church}`);
+                console.log(`DBG | speaker_sermonnote : ${userStates[from].speaker}`);
+                console.log(`DBG | titlesermon_sermonnote : ${userStates[from].title}`);
+                console.log(`DBG | content_sermonnote : ${userStates[from].content}`);
+                console.log(`DBG | summary_sermonnote : ${userStates[from].summary}`);
                 
                 const response = await axios.post(
                     `${API_BASE_URL}/insert_sermonnote.php`,
@@ -495,7 +502,7 @@ client.on('message', async (message) => {
 
         userStates[from].source = body;
         userStates[from].stage = 'qt_waiting_for_verse';
-        await client.sendMessage(from, "📜 Apa buku yang kamu baca atau renungkan?");
+        await client.sendMessage(from, "📜 Buku dan bagian apa yang sedang kamu baca atau renungkan?");
         return;
     }
 
@@ -519,6 +526,14 @@ client.on('message', async (message) => {
         const saveQuietTime = async (attempt = 1) => {
             try {
                 console.log(`🔄 Percobaan ke-${attempt} untuk menyimpan Quiet Time...`);
+                        
+                console.log(`DBG | id_user : ${userStates[from].userId}`);
+                console.log(`DBG | source_quiettime : ${userStates[from].source}`);
+                console.log(`DBG | content_note : ${userStates[from].content}`);
+                console.log(`DBG | verse_quiettime : ${userStates[from].verse}`);
+                console.log(`DBG | reflection_quiettime : ${userStates[from].reflection}`);
+                console.log(`DBG | actionplan_quiettime : ${userStates[from].actionplan}`);
+
                 await axios.post(`${API_BASE_URL}/insert_quiettime.php`, {
                     id_user: userStates[from].userId,
                     source_quiettime: userStates[from].source,
@@ -574,6 +589,11 @@ client.on('message', async (message) => {
         const saveNote = async (attempt = 1) => {
             try {
                 console.log(`🔄 Percobaan ke-${attempt} untuk menyimpan Catatan...`);
+                        
+                console.log(`DBG | id_user : ${userStates[from].userId}`);
+                console.log(`DBG | title_note : ${userStates[from].title}`);
+                console.log(`DBG | content_note : ${userStates[from].content}`);
+    
                 await axios.post(`${API_BASE_URL}/insert_note.php`, {
                     id_user: userStates[from].userId,
                     title_note: userStates[from].title,
