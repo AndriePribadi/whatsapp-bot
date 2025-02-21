@@ -643,7 +643,7 @@ client.on('message', async (message) => {
         const seconds = date.getSeconds();
         
         // Validasi hanya antara 00:00:01 - 08:59:59
-        if (!(hours < 9 || (hours === 0 && minutes === 0 && seconds > 0))) {
+        if (!(hours >= 0 && hours < 9)) {
             console.log(` Jam doa pagi tidak valid ...`);
             return;
         }
