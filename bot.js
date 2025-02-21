@@ -181,7 +181,7 @@ client.on('message', async (message) => {
                 const response = await axios.post(`${API_BASE_URL}/check_in_home.php`, {
                     id_user: userStates[from].userId,
                     kode_home: userStates[from]?.userHomeCode,
-                    secret_key: text.split(' ')[1] || "";
+                    secret_key: text.split(' ')[1] || "",
                 }, {
                     headers: {
                         'User-Agent': 'Mozilla/5.0',
