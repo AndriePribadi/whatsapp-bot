@@ -332,7 +332,7 @@ client.on('message', async (message) => {
     if (text === '/birthday') {
         const identity = await identityCheck();
         if (!identity || identity.responseCode !== "OK") {
-            await client.sendMessage(from, ❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih);
+            await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
             return;
         }
     
