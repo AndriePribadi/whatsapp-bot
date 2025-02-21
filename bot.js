@@ -37,6 +37,8 @@ client.on('message', async (message) => {
     // 🔹 Bersihkan nomor agar hanya angka (tanpa @c.us)
     const userPhoneNumber = from.replace('@c.us', '');
 
+    console.log(`Received message from: ${userPhoneNumber}`); // Log the phone number
+
     if (text === '/cancel' && userStates[from]) {
         delete userStates[from];
         await client.sendMessage(from, '🚫 *Oke, proses sudah kami batalkan.* \n🙋🏻‍♂️ Terima kasih dan sampai ketemu lagi.');
@@ -56,11 +58,13 @@ client.on('message', async (message) => {
     // Identity check for other commands
     const identityCheck = async () => {
         try {
+            console.log(`Checking identity for phone number: ${userPhoneNumber}`); // Log the phone number being sent
             const response = await axios.post(
                 `${API_BASE_URL}/get_user_by_phonenumber.php`,
                 { userPhoneNumber: userPhoneNumber },
                 { httpsAgent: agent }
             );
+            console.log(`Identity check response: ${JSON.stringify(response.data)}`); // Log the response
             if (response.data.responseCode === "OK") {
                 userStates[from] = {
                     ...userStates[from],
