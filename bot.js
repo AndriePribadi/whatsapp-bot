@@ -420,6 +420,7 @@ client.on('message', async (message) => {
     }
 
     if (userStates[from]?.stage === 'waiting_for_summary') {
+        const identity = await identityCheck();
         userStates[from].summary = body;
         
         // Function untuk mencoba insert sermon note dengan retry
@@ -521,6 +522,7 @@ client.on('message', async (message) => {
     }
 
     if (userStates[from]?.stage === 'qt_waiting_for_actionplan') {
+        const identity = await identityCheck();
         userStates[from].actionplan = body;
 
         const saveQuietTime = async (attempt = 1) => {
@@ -577,6 +579,7 @@ client.on('message', async (message) => {
     }
     
     if (userStates[from]?.stage === 'n_waiting_for_title') {
+        const identity = await identityCheck();
         userStates[from].title = body;
         userStates[from].stage = 'n_waiting_for_content';
         await client.sendMessage(from, "✏️ Sekarang, silakan isi catatan kamu di bawah ini.");
@@ -584,6 +587,7 @@ client.on('message', async (message) => {
     }
     
     if (userStates[from]?.stage === 'n_waiting_for_content') {
+        const identity = await identityCheck();
         userStates[from].content = body;
         
         const saveNote = async (attempt = 1) => {
