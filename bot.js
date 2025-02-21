@@ -657,7 +657,7 @@ client.on('message', async (message) => {
                     const namaLengkap = userStates[from].userName;
                     const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
 
-                    await client.sendMessage(from, 
+                    await client.sendMessage(fromMe ? client.info.wid.user : (author || from), 
                         `✅ *Terima kasih, ${namaLengkap}!* Doa pagi kamu sudah diterima. \n\n` +
                         `_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n` +
                         `✨ *Tuhan Yesus memberkati!* 🥳`
@@ -667,7 +667,7 @@ client.on('message', async (message) => {
                     delete userStates[from];
 
                 } else {
-                    await client.sendMessage(from, `⚠️ *Gagal menyimpan doa pagi:* ${response.data.message}`);
+                    await client.sendMessage(adminNumber, `⚠️ *Gagal menyimpan doa pagi:* ${response.data.message}`);
                     delete userStates[from];
                 }
 
