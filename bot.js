@@ -153,7 +153,8 @@ client.on('message', async (message) => {
         if (userStates[from]?.userHomeCode === 'WLS') {
             message += `🎤 Khusus untuk Home WL Singer, coba fitur ini ya :\n`;
             message += `* */absensi* → Melihat persentase kehadiran doa pagi.\n`;
-            message += `* Dan untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi (khusus wl singer).\n\n`;
+            message += `* Dan untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi (khusus wl singer).\n`;
+            message += `_note : Doa Pagi hanya diterima sebelum pkl 09.00 setiap paginya_\n\n`;
         }
         
         message += `Jika butuh bantuan lebih lanjut, \nJangan ragu untuk menghubungi home leader masing masing ya\n Selamat berjuang! God Bless ✨`;
@@ -641,8 +642,8 @@ client.on('message', async (message) => {
         const minutes = date.getMinutes();
         const seconds = date.getSeconds();
 
-        // Validasi hanya antara 05:01:00 - 08:59:59
-        if (!((hours === 5 && minutes >= 01) || (hours >= 6 && hours < 9) || (hours === 8 && minutes <= 59 && seconds <= 59))) {
+        // Validasi hanya antara 00:01:00 - 08:59:59
+        if (!((hours === 0 && minutes >= 1) || (hours >= 6 && hours < 9) || (hours === 8 && minutes <= 59 && seconds <= 59))) {
             return;
         }
         
