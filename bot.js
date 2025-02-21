@@ -633,63 +633,64 @@ client.on('message', async (message) => {
         return;
     }
 
-    
-   // Doa pagi direct input oleh setiap pengguna (jika tidak sedang dalam sesi /doa atau /sermonnote)
     if (text.length > 20 && !text.startsWith('/') && (!userStates[from] || !userStates[from].stage)) {
         const identity = await identityCheck();
-        const insertDoaPagi = async (attempt = 1) => {
-            try {
-                console.log(`🔄 Percobaan ke-${attempt} untuk menyimpan doa pagi...`);
-
-                const response = await axios.post(
-                    `${API_BASE_URL}/insert_doapagi.php`,
-                    { id_user: userStates[from].userId, content: body.trim() },
-                    {
-                        headers: {
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                            'Content-Type': 'application/json'
-                        },
-                        httpsAgent: agent
-                    }
-                );
-
-                if (response.data.status === "success") {
-                    const namaLengkap = userStates[from].userName;
-                    const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-
-                    await client.sendMessage(fromMe ? client.info.wid.user : (author || from), 
-                        `✅ *Terima kasih, ${namaLengkap}!* Doa pagi kamu sudah diterima. \n\n` +
-                        `_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n` +
-                        `✨ *Tuhan Yesus memberkati!* 🥳`
+        
+        if (identity && identity.responseCode === "OK" && userStates[from]?.userName) {
+            const insertDoaPagi = async (attempt = 1) => {
+                try {
+                    console.log(`🔄 Percobaan ke-${attempt} untuk menyimpan doa pagi...`);
+        
+                    const response = await axios.post(
+                        `${API_BASE_URL}/insert_doapagi.php`,
+                        { id_user: userStates[from].userId, content: body.trim() },
+                        {
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                                'Content-Type': 'application/json'
+                            },
+                            httpsAgent: agent
+                        }
                     );
-
-                    await client.sendMessage(adminNumber, `📢 *${namaLengkap}* (${userPhoneNumber}) baru saja submit doa pagi pada *${now}*.`);
-                    delete userStates[from];
-
-                } else {
-                    await client.sendMessage(adminNumber, `⚠️ *Gagal menyimpan doa pagi:* ${response.data.message}`);
-                    delete userStates[from];
+        
+                    if (response.data.status === "success") {
+                        const namaLengkap = userStates[from].userName;
+                        const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+        
+                        await client.sendMessage(fromMe ? client.info.wid.user : (author || from), 
+                            `✅ *Terima kasih, ${namaLengkap}!* Doa pagi kamu sudah diterima. \n\n` +
+                            `_Selamat beraktivitas dan jangan lupa untuk selalu jadi berkat dimanapun kamu berada._ \n` +
+                            `✨ *Tuhan Yesus memberkati!* 🥳`
+                        );
+        
+                        await client.sendMessage(adminNumber, `📢 *${namaLengkap}* (${userPhoneNumber}) baru saja submit doa pagi pada *${now}*.`);
+                        delete userStates[from];
+        
+                    } else {
+                        await client.sendMessage(adminNumber, `⚠️ *Gagal menyimpan doa pagi:* ${response.data.message}`);
+                        delete userStates[from];
+                    }
+        
+                } catch (error) {
+                    console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
+        
+                    if (attempt < 5) {
+                        // Coba lagi setelah 2 detik
+                        setTimeout(() => insertDoaPagi(attempt + 1), 2000);
+                    } else {
+                        // Jika sudah gagal 5 kali, kirim pesan error
+                        await client.sendMessage(from, '⚠️ Terjadi kesalahan saat menyimpan doa pagi. Silakan coba lagi nanti.');
+                        delete userStates[from];
+                    }
                 }
-
-            } catch (error) {
-                console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
-
-                if (attempt < 5) {
-                    // Coba lagi setelah 2 detik
-                    setTimeout(() => insertDoaPagi(attempt + 1), 2000);
-                } else {
-                    // Jika sudah gagal 5 kali, kirim pesan error
-                    await client.sendMessage(from, '⚠️ Terjadi kesalahan saat menyimpan doa pagi. Silakan coba lagi nanti.');
-                    delete userStates[from];
-                }
-            }
-        };
-
-        // Jalankan percobaan pertama
-        insertDoaPagi();
+            };
+        
+            // Jalankan percobaan pertama
+            insertDoaPagi();
+        }
         return;
     }
-    
+
 
     // 🔹 Cek apakah user mengetik "/doa <id> <isi doa>"
     // const match = text.match(/^\/doa\s+(\S+)\s+(.+)$/i);
