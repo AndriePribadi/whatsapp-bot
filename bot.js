@@ -641,11 +641,13 @@ client.on('message', async (message) => {
         const hours = date.getHours();
         const minutes = date.getMinutes();
         const seconds = date.getSeconds();
-
-        // Validasi hanya antara 00:01:00 - 08:59:59
-        if (!((hours === 0 && minutes >= 1) || (hours >= 6 && hours < 9) || (hours === 8 && minutes <= 59 && seconds <= 59))) {
+        
+        // Validasi hanya antara 00:00:01 - 08:59:59
+        if (!(hours < 9 || (hours === 0 && minutes === 0 && seconds > 0))) {
+            console.log(` Jam doa pagi tidak valid ...`);
             return;
         }
+        console.log(` process doa pagi ...`);
         
         const identity = await identityCheck();
         
