@@ -135,7 +135,7 @@ client.on('message', async (message) => {
             await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
             return;
         }
-        await client.sendMessage(from, `👤 Username kamu adalah *${userStates[from].userUsername}*.`);
+        await client.sendMessage(from, `👤 Username kamu adalah *${userStates[from].userUsername}*.\Kalau ada pertanyaan, jangan ragu hubungi home leader kamu ya. 🥳`);
         delete userStates[from];
         return;
     }
@@ -166,7 +166,7 @@ client.on('message', async (message) => {
         if (userStates[from]?.userHomeCode === 'WLS') {
             message += `🎤 Khusus untuk Home WL Singer, coba fitur ini ya :\n`;
             message += `* */absensi* → Melihat persentase kehadiran doa pagi.\n`;
-            message += `* Dan untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 20 char akan dianggap rangkuman doa pagi (khusus wl singer).\n`;
+            message += `* Dan untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 50 char akan dianggap rangkuman doa pagi (khusus wl singer).\n`;
             message += `_note : Doa Pagi hanya diterima sebelum pkl 09.00 setiap paginya_\n\n`;
         }
         
@@ -257,7 +257,8 @@ client.on('message', async (message) => {
     
                 if (response.data.status === "success") {
                     const jumlahKehadiran = response.data.jumlah_kehadiran;
-                    const today = new Date();
+                    const today = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', hour12: false });
+                    // const today = new Date();
                     const hariDalamBulan = today.getDate(); // Jumlah hari berjalan dalam bulan ini
     
                     // 🔹 Hitung persentase kehadiran
@@ -647,19 +648,26 @@ client.on('message', async (message) => {
         return;
     }
 
-    if (text.length > 20 && !text.startsWith('/') && (!userStates[from] || !userStates[from].stage)) {
+    if (text.length > 50 && !text.startsWith('/') && (!userStates[from] || !userStates[from].stage)) {
             
-        const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+        const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', hour12: false });
         const date = new Date(now);
         const hours = date.getHours();
         const minutes = date.getMinutes();
         const seconds = date.getSeconds();
         
         // Validasi hanya antara 00:00:01 - 08:59:59
-        // if (!(hours >= 0 && hours < 9)) {
-        //     console.log(` Jam doa pagi tidak valid ...`);
-        //     return;
-        // }
+        
+        console.log(`DBG | now : ` + now);
+        console.log(`DBG | date : ` + date);
+        console.log(`DBG | hours : ` + hours);
+        console.log(`DBG | minutes : ` + minutes);
+        console.log(`DBG | secondsnow : ` + seconds);
+        
+        if (!(hours >= 0 && hours < 9)) {
+            console.log(` Jam doa pagi tidak valid ...`);
+            return;
+        }
         console.log(` process doa pagi ...`);
         
         const identity = await identityCheck();
@@ -684,6 +692,7 @@ client.on('message', async (message) => {
                     if (response.data.status === "success") {
                         const namaLengkap = userStates[from].userName;
                         const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+                        
         
                         await client.sendMessage(fromMe ? client.info.wid.user : (author || from), 
                             `✅ *Terima kasih, ${namaLengkap}!* Doa pagi kamu sudah diterima. \n\n` +
