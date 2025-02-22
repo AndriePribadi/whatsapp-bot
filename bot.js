@@ -116,6 +116,15 @@ client.on('message', async (message) => {
         }
     };
     
+    // Log the IP address used by the server
+    axios.get('https://api.ipify.org?format=json')
+        .then(response => {
+            console.log(`🌐 Server IP Address: ${response.data.ip}`);
+        })
+        .catch(error => {
+            console.error('⚠️ Error fetching IP address:', error.message);
+        });
+    
     if (text === '/username') {
         const identity = await identityCheck();
         if (!identity || identity.responseCode !== "OK" || !userStates[from]) {
