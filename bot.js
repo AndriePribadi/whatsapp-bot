@@ -116,14 +116,18 @@ client.on('message', async (message) => {
         }
     };
     
-    // Log the IP address used by the server
-    axios.get('https://api.ipify.org?format=json')
-        .then(response => {
-            console.log(`🌐 Server IP Address: ${response.data.ip}`);
-        })
-        .catch(error => {
-            console.error('⚠️ Error fetching IP address:', error.message);
-        });
+    if (text === '/ip') {
+        // Log the IP address used by the server
+        axios.get('https://api.ipify.org?format=json')
+            .then(response => {
+                console.log(`🌐 Server IP Address: ${response.data.ip}`);
+            })
+            .catch(error => {
+                console.error('⚠️ Error fetching IP address:', error.message);
+            });
+        return;
+    }
+
     
     if (text === '/username') {
         const identity = await identityCheck();
@@ -149,7 +153,7 @@ client.on('message', async (message) => {
         
         message += `📌 silahkan masukan kata kunci dibawah ini ya :\n` +
             `* */hi* → Memulai percakapan dan melihat kata kunci apa saja yang tersedia.\n` +
-            `* */event* → Melihat informasi kegiatan HOME yang terdekat.\n` +
+            `* */event* → Melihat inforasi kegiatan HOME yang terdekat.\n` +
             `* */birthday* → Melihat teman HOME mu yang akan berulangtahun dalam waktu dekat.\n\n`;
         
         message += `🏠 Kami juga menyediakan fitur yang terhubung ke Portal Home :\n` +
