@@ -273,7 +273,8 @@ client.on('message', async (message) => {
                     } else {
                         pesan = "Kamu luar biasa! Yuk terus pertahankan kerajinanmu ini ya 🤗";
                     }
-    
+                    
+                    const today = new Date();
                     await client.sendMessage(from, 
                         `📊 *Absensi Doa Pagi ` + userStates[from]?.userName + `*\n\n` +
                         `📅 Bulan *${today.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}*\n` +
