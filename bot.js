@@ -257,9 +257,10 @@ client.on('message', async (message) => {
     
                 if (response.data.status === "success") {
                     const jumlahKehadiran = response.data.jumlah_kehadiran;
-                    const today = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', hour12: false });
-                    // const today = new Date();
-                    const hariDalamBulan = today.getDate(); // Jumlah hari berjalan dalam bulan ini
+                    
+                    const now = new Date();
+                    const nowUTC7 = new Date(now.getTime() + (7 * 60 * 60 * 1000)); // Tambahkan offset 7 jam
+                    const hariDalamBulan = nowUTC7.getUTCDate(); // Gunakan getUTCDate karena sudah ditambah offset
     
                     // 🔹 Hitung persentase kehadiran
                     const persentase = ((jumlahKehadiran / hariDalamBulan) * 100).toFixed(2);
@@ -274,7 +275,7 @@ client.on('message', async (message) => {
                     }
     
                     await client.sendMessage(from, 
-                        `📊 *Absensi Doa Pagi*\n\n` +
+                        `📊 *Absensi Doa Pagi ` + userStates[from]?.userName + `*\n\n` +
                         `📅 Bulan *${today.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}*\n` +
                         `✅ Jumlah kehadiranmu: *${jumlahKehadiran} hari*\n` +
                         `📆 Total hari berjalan: *${hariDalamBulan} hari*\n` +
