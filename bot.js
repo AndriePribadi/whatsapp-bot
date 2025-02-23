@@ -104,7 +104,7 @@ client.on('message', async (message) => {
         } catch (error) {
             console.error(`⚠️ [Percobaan ${attempt}] Error saat cek identitas:`, error.message);
     
-            if (attempt < 5) {
+            if (attempt < 10) {
                 // Coba lagi setelah 2 detik
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 return identityCheck(attempt + 1);
@@ -216,7 +216,7 @@ client.on('message', async (message) => {
                 }
             } catch (error) {
                 console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
-                if (attempt < 5) {
+                if (attempt < 10) {
                     setTimeout(() => checkin(attempt + 1), 2000);
                 } else {
                     await client.sendMessage(from, "⚠️ Terjadi kesalahan saat check-in. Silakan coba lagi nanti.");
@@ -292,7 +292,7 @@ client.on('message', async (message) => {
             } catch (error) {
                 console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
     
-                if (attempt < 5) {
+                if (attempt < 10) {
                     // Coba lagi setelah 2 detik
                     setTimeout(() => fetchAbsensi(attempt + 1), 2000);
                 } else {
@@ -342,7 +342,7 @@ client.on('message', async (message) => {
             } catch (error) {
                 console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
     
-                if (attempt < 5) {
+                if (attempt < 10) {
                     // Coba lagi setelah 2 detik
                     setTimeout(() => fetchEvent(attempt + 1), 2000);
                 } else {
@@ -481,7 +481,7 @@ client.on('message', async (message) => {
             } catch (error) {
                 console.error(`⚠️ [Percobaan ${attempt}] Error saat menyimpan sermon note:`, error.message);
 
-                if (attempt < 5) {
+                if (attempt < 10) {
                     // Coba lagi setelah 2 detik
                     await new Promise(resolve => setTimeout(resolve, 2000));
                     return insertSermonNote(attempt + 1);
@@ -579,7 +579,7 @@ client.on('message', async (message) => {
                 delete userStates[from];
             } catch (error) {
                 console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
-                if (attempt < 5) {
+                if (attempt < 10) {
                     setTimeout(() => saveQuietTime(attempt + 1), 2000);
                 } else {
                     await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan renungan kamu.");
@@ -612,6 +612,7 @@ client.on('message', async (message) => {
     }
     
     if (userStates[from]?.stage === 'n_waiting_for_content') {
+        const identity = await identityCheck();
         userStates[from].content = body;
         
         const saveNote = async (attempt = 1) => {
@@ -637,7 +638,7 @@ client.on('message', async (message) => {
                 delete userStates[from];
             } catch (error) {
                 console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
-                if (attempt < 5) {
+                if (attempt < 10) {
                     setTimeout(() => saveNote(attempt + 1), 2000);
                 } else {
                     await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan catatan kamu.");
@@ -712,7 +713,7 @@ client.on('message', async (message) => {
                     } catch (error) {
                         console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
             
-                        if (attempt < 5) {
+                        if (attempt < 10) {
                             // Coba lagi setelah 2 detik
                             setTimeout(() => insertDoaPagi(attempt + 1), 2000);
                         } else {
@@ -791,7 +792,7 @@ client.on('message', async (message) => {
             } catch (error) {
                 console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
 
-                if (attempt < 5) {
+                if (attempt < 10) {
                     // Coba lagi setelah 2 detik
                     setTimeout(() => tryProcess(attempt + 1), 2000);
                 } else {
