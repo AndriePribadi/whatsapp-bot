@@ -319,13 +319,20 @@ client.on('message', async (message) => {
             try {
                 console.log(`🔄 Percobaan ke-${attempt} untuk mengambil data event...`);
     
-                const response = await axios.get(`${API_BASE_URL}/event.php`, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                        'Content-Type': 'application/json'
-                    },
-                    httpsAgent: agent
-                });
+                // const response = await axios.get(`${API_BASE_URL}/event.php`, {
+                //     headers: {
+                //         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                //         'Content-Type': 'application/json'
+                //     },
+                //     httpsAgent: agent
+                // });
+                    
+                const response = await axios.post(
+                    `${API_BASE_URL}/event.php`,
+                    { kode_home: userStates[from].userHomeCode },
+                    { httpsAgent: agent }
+                );
+
     
                 if (response.data.status === "success") {
                     const eventDescription = response.data.deskripsi;
