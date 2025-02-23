@@ -135,7 +135,7 @@ client.on('message', async (message) => {
             await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing masing, terima kasih`);
             return;
         }
-        await client.sendMessage(from, `👤 Username kamu adalah *${userStates[from].userUsername}*.\Kalau ada pertanyaan, jangan ragu hubungi home leader kamu ya. 🥳`);
+        await client.sendMessage(from, `👤 Username kamu adalah *${userStates[from].userUsername}*.\nJika kamu butuh bantuan, jangan ragu untuk hubungi Home Leader kamu ya. 🥳`);
         delete userStates[from];
         return;
     }
