@@ -110,7 +110,7 @@ client.on('message', async (message) => {
                 return identityCheck(attempt + 1);
             } else {
                 // Jika gagal 5 kali, kirim pesan error ke user
-                await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memeriksa identitas. Silakan coba lagi nanti.');
+                await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memeriksa identitas. \nMohon dicoba kembali, dan jika masih gagal jangan ragu laporkan ke home leader kamu ya..');
                 return null;
             }
         }
@@ -219,7 +219,7 @@ client.on('message', async (message) => {
                 if (attempt < 10) {
                     setTimeout(() => checkin(attempt + 1), 2000);
                 } else {
-                    await client.sendMessage(from, "⚠️ Terjadi kesalahan saat check-in. Silakan coba lagi nanti.");
+                    await client.sendMessage(from, "⚠️ Terjadi kesalahan saat check-in. \nMohon dicoba kembali, dan jika masih gagal jangan ragu laporkan ke home leader kamu ya..");
                     delete userStates[from];
                 }
             }
@@ -297,7 +297,7 @@ client.on('message', async (message) => {
                     setTimeout(() => fetchAbsensi(attempt + 1), 2000);
                 } else {
                     // Jika sudah gagal 5 kali, kirim pesan error
-                    await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data absensi. Silakan coba lagi nanti.");
+                    await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data absensi. \nMohon dicoba kembali, dan jika masih gagal jangan ragu laporkan ke home leader kamu ya..");
                     delete userStates[from];
                 }
             }
@@ -354,7 +354,7 @@ client.on('message', async (message) => {
                     setTimeout(() => fetchEvent(attempt + 1), 2000);
                 } else {
                     // Jika sudah gagal 5 kali, kirim pesan error
-                    await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data event. Silakan coba lagi nanti.");
+                    await client.sendMessage(from,  saat mengambil data event. \nMohon dicoba kembali, dan jika masih gagal jangan ragu laporkan ke home leader kamu ya..");
                     delete userStates[from];
                 }
             }
@@ -494,7 +494,7 @@ client.on('message', async (message) => {
                     return insertSermonNote(attempt + 1);
                 } else {
                     // Jika gagal 5 kali, kirim pesan error ke user
-                    await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan catatan kotbahmu. Silakan coba lagi nanti.");
+                    await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan catatan kotbahmu. \nMohon dicoba kembali, dan jika masih gagal jangan ragu laporkan ke home leader kamu ya..");
                     delete userStates[from];
                 }
             }
@@ -804,7 +804,7 @@ client.on('message', async (message) => {
                     setTimeout(() => tryProcess(attempt + 1), 2000);
                 } else {
                     // Jika sudah gagal 5 kali, kirim pesan error
-                    await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memproses permintaan. Silakan coba lagi nanti.');
+                    await client.sendMessage(from, '⚠️ Terjadi kesalahan saat memproses permintaan. \nMohon dicoba kembali, dan jika masih gagal jangan ragu laporkan ke home leader kamu ya..');
                     delete userStates[from];
                 }
             }
