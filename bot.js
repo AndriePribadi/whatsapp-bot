@@ -354,7 +354,7 @@ client.on('message', async (message) => {
                     setTimeout(() => fetchEvent(attempt + 1), 2000);
                 } else {
                     // Jika sudah gagal 5 kali, kirim pesan error
-                    await client.sendMessage(from,  saat mengambil data event. \nMohon dicoba kembali, dan jika masih gagal jangan ragu laporkan ke home leader kamu ya..");
+                    await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data event. \nMohon dicoba kembali, dan jika masih gagal jangan ragu laporkan ke home leader kamu ya..");
                     delete userStates[from];
                 }
             }
