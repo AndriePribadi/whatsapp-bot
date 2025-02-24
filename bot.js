@@ -161,7 +161,9 @@ client.on('message', async (message) => {
             `* */username* → Melihat username untuk login ke Portal Home.\n` +
             `* */sermonnote* → Membuat *catatan kotbah*.\n` +
             `* */quiettime* → Membuat *quiet time journal*.\n` +
-            `* */note* → Membuat note baru.\n\n`;
+            `* */note* → Membuat note baru.\n` +
+            `* */expense* → Mencatat pengeluaran kamu.\n` +
+            `* */getexpenses* → Melihat rangkuman pengeluaranmu di bulan ini.\n\n`;
         
         if (userStates[from]?.userHomeCode === 'WLS') {
             message += `🎤 Khusus untuk Home WL Singer, coba fitur ini ya :\n`;
@@ -864,8 +866,8 @@ client.on('message', async (message) => {
     
         await client.sendMessage(from, "⚠️ Mohon ketik *submit* untuk menyimpan atau *cancel* untuk membatalkan.");
     }
-
-    if (text === '/getexpenses') {
+    
+    if (text === '/getexpenses' || text === '/getexpense') {
         const identity = await identityCheck();
         if (!identity || identity.responseCode !== "OK" || !userStates[from]) {
             await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing-masing, terima kasih.`);
@@ -874,7 +876,9 @@ client.on('message', async (message) => {
     
         const fetchExpenses = async (attempt = 1) => {
             try {
+                
                 console.log(`🔄 Percobaan ke-${attempt} untuk mengambil data pengeluaran...`);
+                console.log(`DBG | id_user : ${userStates[from].userId}`);
     
                 const response = await axios.post(
                     `${API_BASE_URL}/get_expenses.php`,
@@ -882,7 +886,13 @@ client.on('message', async (message) => {
                     { headers: { 'User-Agent': 'Mozilla/5.0', 'Content-Type': 'application/json' }, httpsAgent: agent }
                 );
     
-                if (response.data.status === "success" && response.data.expenses.length > 0) {
+                if (response.data.status !== "success" || !Array.isArray(response.data.data)) {
+                    await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data pengeluaran. Silakan coba lagi nanti.");
+                    delete userStates[from];
+                    return;
+                }
+    
+                if (response.data.data.length > 0) {
                     const now = new Date();
                     const formatter = new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' });
                     const bulanTahun = formatter.format(now);
@@ -890,20 +900,19 @@ client.on('message', async (message) => {
                     let totalKeseluruhan = 0;
                     let message = `💰 *Ringkasan Pengeluaran - ${bulanTahun}*\n\n`;
     
-                    response.data.expenses.forEach(expense => {
-                        message += `📌 *${expense.category}* : Rp${expense.total.toLocaleString('id-ID')}\n`;
-                        totalKeseluruhan += parseInt(expense.total);
+                    response.data.data.forEach(expense => {
+                        message += `📌 *${expense.category}* : Rp${parseInt(expense.total_expense).toLocaleString('id-ID')}\n`;
+                        totalKeseluruhan += parseInt(expense.total_expense);
                     });
     
                     message += `\n🔹 *Total Pengeluaran:* Rp${totalKeseluruhan.toLocaleString('id-ID')}`;
     
                     await client.sendMessage(from, message);
-                    delete userStates[from];
-    
                 } else {
                     await client.sendMessage(from, "💡 Belum ada data pengeluaran untuk bulan ini. Yuk mulai catat pengeluaranmu! 😊");
-                    delete userStates[from];
                 }
+    
+                delete userStates[from];
     
             } catch (error) {
                 console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
@@ -920,6 +929,7 @@ client.on('message', async (message) => {
         fetchExpenses();
         return;
     }
+
 
 
     // 🔹 Cek apakah user mengetik "/doa <id> <isi doa>"
