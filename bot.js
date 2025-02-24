@@ -167,6 +167,7 @@ client.on('message', async (message) => {
         
         if (userStates[from]?.userHomeCode === 'WLS') {
             message += `🎤 Khusus untuk Home WL Singer, coba fitur ini ya :\n`;
+            message += `* */uangkas* → Mengetahui periode terakhir uang kas yang sudah dibayar.\n`;
             message += `* */absensi* → Melihat persentase kehadiran doa pagi.\n`;
             message += `* Dan untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 50 char akan dianggap rangkuman doa pagi (khusus wl singer).\n`;
             message += `_note : Doa Pagi hanya diterima sebelum pkl 09.00 setiap paginya_\n\n`;
@@ -927,6 +928,53 @@ client.on('message', async (message) => {
         };
     
         fetchExpenses();
+        return;
+    }
+    
+    if (text === '/uangkas') {
+        const identity = await identityCheck();
+        if (!identity || identity.responseCode !== "OK" || !userStates[from]) {
+            await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing-masing, terima kasih.`);
+            return;
+        }
+    
+        const fetchUangKas = async (attempt = 1) => {
+            try {
+                console.log(`🔄 Percobaan ke-${attempt} untuk mengambil data uang kas...`);
+                console.log(`DBG | id_user : ${userStates[from].userId}`);
+    
+                const response = await axios.post(
+                    `${API_BASE_URL}/get_uangkas.php`,
+                    { id_user: userStates[from].userId },
+                    { headers: { 'User-Agent': 'Mozilla/5.0', 'Content-Type': 'application/json' }, httpsAgent: agent }
+                );
+    
+                if (response.data.status !== "success" || !response.data.data) {
+                    await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data uang kas. Silakan coba lagi nanti.");
+                    delete userStates[from];
+                    return;
+                }
+    
+                const { last_period, next_period } = response.data.data;
+                let message = `💰 *Informasi Uang Kas*`;
+                message += `📆 *Periode terakhir dengan kas masuk:* ${last_period || "Tidak ditemukan"}`;
+                message += `➡️ *Periode berikutnya:* ${next_period || "Tidak ditemukan"}`;
+    
+                await client.sendMessage(from, message);
+                delete userStates[from];
+    
+            } catch (error) {
+                console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
+                if (attempt < 5) {
+                    setTimeout(() => fetchUangKas(attempt + 1), 2000);
+                } else {
+                    await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data uang kas. Silakan coba lagi nanti.");
+                    delete userStates[from];
+                }
+            }
+        };
+    
+        fetchUangKas();
         return;
     }
 
