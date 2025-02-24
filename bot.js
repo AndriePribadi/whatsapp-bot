@@ -962,8 +962,8 @@ client.on('message', async (message) => {
     
                 const { last_period, next_period } = response.data.data;
                 let message = `💰 *Informasi Uang Kas*\n\n`;
-                message += `📆 Pembayaran uang kas yang terakhir kami terima adalah untuk periode *${last_period || "Tidak ditemukan"}*\n`;
-                message += `➡️ Periode berikutnya adalah untuk periode : *${next_period || "Tidak ditemukan"}*`;
+                message += `📆 Uang kas yang terakhir kamu bayar adalah periode *${last_period || "Tidak ditemukan"}*\n`;
+                message += `➡️ Jangan lupa untuk bayar kas periode *${next_period || "Tidak ditemukan"}* ya 😆`;
     
                 await client.sendMessage(from, message);
                 delete userStates[from];
