@@ -738,6 +738,189 @@ client.on('message', async (message) => {
         return;
     }
 
+    // ENUM kategori sesuai database
+    const expenseCategories = {
+        1: "Kebutuhan Rutin",
+        2: "Makanan",
+        3: "Online Shop",
+        4: "Transportasi",
+        5: "Hiburan",
+        6: "Kesehatan",
+        7: "Lainnya"
+    };
+    
+    // Mulai proses insert expense
+    if (text === '/expense' && (!userStates[from] || userStates[from].stage === 'e_waiting_for_selection')) {
+        const identity = await identityCheck();
+        if (!identity || identity.responseCode !== "OK" || !userStates[from]) {
+            await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing-masing, terima kasih`);
+            return;
+        }
+        
+        userStates[from] = { stage: 'e_waiting_for_category' };
+        await client.sendMessage(from, 
+            "📊 Silakan pilih kategori pengeluaran:\n\n" +
+            "1️⃣ Kebutuhan Rutin\n" +
+            "2️⃣ Makanan\n" +
+            "3️⃣ Online Shop\n" +
+            "4️⃣ Transportasi\n" +
+            "5️⃣ Hiburan\n" +
+            "6️⃣ Kesehatan\n" +
+            "7️⃣ Lainnya\n\n" +
+            "Ketik angka sesuai kategori."
+        );
+        return;
+    }
+    
+    // Pilih kategori
+    if (userStates[from]?.stage === 'e_waiting_for_category') {
+        const categoryNumber = parseInt(body, 10);
+        
+        if (!expenseCategories[categoryNumber]) {
+            await client.sendMessage(from, "⚠️ Kategori tidak valid. Silakan ketik angka 1-7.");
+            return;
+        }
+    
+        userStates[from].category = expenseCategories[categoryNumber];
+        userStates[from].stage = 'e_waiting_for_description';
+        await client.sendMessage(from, "✏️ Silakan masukkan deskripsi atau tujuan pengeluaran kamu.");
+        return;
+    }
+    
+    // Masukkan deskripsi
+    if (userStates[from]?.stage === 'e_waiting_for_description') {
+        userStates[from].description = body;
+        userStates[from].stage = 'e_waiting_for_nominal';
+        await client.sendMessage(from, "💰 Silakan masukkan nominal pengeluaran kamu.");
+        return;
+    }
+    
+    // Masukkan nominal
+    if (userStates[from]?.stage === 'e_waiting_for_nominal') {
+        const nominal = parseInt(body.replace(/\D/g, ''), 10);
+        
+        if (isNaN(nominal) || nominal <= 0) {
+            await client.sendMessage(from, "⚠️ Mohon masukkan angka yang valid untuk nominal.");
+            return;
+        }
+    
+        userStates[from].nominal = nominal;
+        userStates[from].stage = 'e_waiting_for_confirmation';
+        
+        // Tampilkan konfirmasi sebelum submit
+        await client.sendMessage(from, 
+            `🔍 Konfirmasi pengeluaran kamu:\n\n` +
+            `📌 *Kategori:* ${userStates[from].category}\n` +
+            `📝 *Deskripsi:* ${userStates[from].description}\n` +
+            `💰 *Nominal:* Rp${userStates[from].nominal.toLocaleString("id-ID")}\n\n` +
+            `Ketik *submit* untuk menyimpan atau *cancel* untuk membatalkan.`
+        );
+        return;
+    }
+    
+    // Konfirmasi submit atau cancel
+    if (userStates[from]?.stage === 'e_waiting_for_confirmation') {
+        const identity = await identityCheck();
+        if (body.toLowerCase() === "submit") {
+            const saveExpense = async (attempt = 1) => {
+                try {
+                    console.log(`🔄 Percobaan ke-${attempt} untuk menyimpan Pengeluaran...`);
+                    
+                    await axios.post(`${API_BASE_URL}/insert_expenses.php`, {
+                        id_user: userStates[from].userId,
+                        category: userStates[from].category,
+                        description_expense: userStates[from].description,
+                        nominal_expense: userStates[from].nominal,
+                    }, {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0',
+                            'Content-Type': 'application/json'
+                        },
+                        httpsAgent: agent
+                    });
+    
+                    await client.sendMessage(from, "✅ Pengeluaran kamu berhasil disimpan! 💵");
+                    delete userStates[from];
+                } catch (error) {
+                    console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
+                    if (attempt < 10) {
+                        setTimeout(() => saveExpense(attempt + 1), 2000);
+                    } else {
+                        await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan pengeluaran kamu.");
+                        delete userStates[from];
+                    }
+                }
+            };
+    
+            saveExpense();
+            return;
+        } 
+        
+        if (body.toLowerCase() === "cancel") {
+            await client.sendMessage(from, "❌ Catat pengeluaran dibatalkan.");
+            delete userStates[from];
+            return;
+        }
+    
+        await client.sendMessage(from, "⚠️ Mohon ketik *submit* untuk menyimpan atau *cancel* untuk membatalkan.");
+    }
+
+    if (text === '/getexpenses') {
+        const identity = await identityCheck();
+        if (!identity || identity.responseCode !== "OK" || !userStates[from]) {
+            await client.sendMessage(from, `❌ Maaf nomor kamu tidak terdaftar dalam sistem, mohon menghubungi home leader masing-masing, terima kasih.`);
+            return;
+        }
+    
+        const fetchExpenses = async (attempt = 1) => {
+            try {
+                console.log(`🔄 Percobaan ke-${attempt} untuk mengambil data pengeluaran...`);
+    
+                const response = await axios.post(
+                    `${API_BASE_URL}/get_expenses.php`,
+                    { id_user: userStates[from].userId },
+                    { headers: { 'User-Agent': 'Mozilla/5.0', 'Content-Type': 'application/json' }, httpsAgent: agent }
+                );
+    
+                if (response.data.status === "success" && response.data.expenses.length > 0) {
+                    const now = new Date();
+                    const formatter = new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' });
+                    const bulanTahun = formatter.format(now);
+    
+                    let totalKeseluruhan = 0;
+                    let message = `💰 *Ringkasan Pengeluaran - ${bulanTahun}*\n\n`;
+    
+                    response.data.expenses.forEach(expense => {
+                        message += `📌 *${expense.category}* : Rp${expense.total.toLocaleString('id-ID')}\n`;
+                        totalKeseluruhan += parseInt(expense.total);
+                    });
+    
+                    message += `\n🔹 *Total Pengeluaran:* Rp${totalKeseluruhan.toLocaleString('id-ID')}`;
+    
+                    await client.sendMessage(from, message);
+                    delete userStates[from];
+    
+                } else {
+                    await client.sendMessage(from, "💡 Belum ada data pengeluaran untuk bulan ini. Yuk mulai catat pengeluaranmu! 😊");
+                    delete userStates[from];
+                }
+    
+            } catch (error) {
+                console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
+    
+                if (attempt < 5) {
+                    setTimeout(() => fetchExpenses(attempt + 1), 2000);
+                } else {
+                    await client.sendMessage(from, "⚠️ Terjadi kesalahan saat mengambil data pengeluaran. Silakan coba lagi nanti.");
+                    delete userStates[from];
+                }
+            }
+        };
+    
+        fetchExpenses();
+        return;
+    }
+
 
     // 🔹 Cek apakah user mengetik "/doa <id> <isi doa>"
     // const match = text.match(/^\/doa\s+(\S+)\s+(.+)$/i);
