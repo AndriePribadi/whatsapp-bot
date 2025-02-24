@@ -162,13 +162,13 @@ client.on('message', async (message) => {
             `* */sermonnote* → Membuat *catatan kotbah*.\n` +
             `* */quiettime* → Membuat *quiet time journal*.\n` +
             `* */note* → Membuat note baru.\n` +
-            `* */expense* → Mencatat pengeluaran kamu.\n` +
-            `* */getexpenses* → Melihat rangkuman pengeluaranmu di bulan ini.\n\n`;
+            `* */expense* → Mencatat pengeluaran kamu. (new✨)\n` +
+            `* */getexpenses* → Melihat rangkuman pengeluaranmu di bulan ini. (new✨)\n\n`;
         
         if (userStates[from]?.userHomeCode === 'WLS') {
             message += `🎤 Khusus untuk Home WL Singer, coba fitur ini ya :\n`;
-            message += `* */uangkas* → Mengetahui periode terakhir uang kas yang sudah dibayar.\n`;
             message += `* */absensi* → Melihat persentase kehadiran doa pagi.\n`;
+            message += `* */uangkas* → Mengetahui periode terakhir uang kas yang sudah dibayar. (new✨)\n`;
             message += `* Dan untuk mengirim *rangkuman doa pagi*, langsung kirimkan rangkuman tanpa command apapun didepannya ya. Text yang dikirim lebih dari 50 char akan dianggap rangkuman doa pagi (khusus wl singer).\n`;
             message += `_note : Doa Pagi hanya diterima sebelum pkl 09.00 setiap paginya_\n\n`;
         }
@@ -259,15 +259,64 @@ client.on('message', async (message) => {
                 );
     
                 if (response.data.status === "success") {
-                    const jumlahKehadiran = response.data.jumlah_kehadiran;
-                    
                     const now = new Date();
-                    const nowUTC7 = new Date(now.getTime() + (7 * 60 * 60 * 1000)); // Tambahkan offset 7 jam
-                    const hariDalamBulan = nowUTC7.getUTCDate(); // Gunakan getUTCDate karena sudah ditambah offset
-    
-                    // 🔹 Hitung persentase kehadiran
-                    const persentase = ((jumlahKehadiran / hariDalamBulan) * 100).toFixed(2);
-    
+                    const nowUTC7 = new Date(now.getTime() + (7 * 60 * 60 * 1000)); // Waktu UTC+7
+                    
+                    // Tentukan periode saat ini
+                    const tanggalSekarang = nowUTC7.getUTCDate();
+                    const bulanSekarang = nowUTC7.getUTCMonth() + 1; // Januari = 0, maka perlu +1
+                    const tahunSekarang = nowUTC7.getUTCFullYear();
+                    
+                    let bulanMulai, tahunMulai, bulanSelesai, tahunSelesai;
+                    
+                    // Periode saat ini
+                    if (tanggalSekarang >= 16) {
+                        bulanMulai = bulanSekarang;
+                        tahunMulai = tahunSekarang;
+                        bulanSelesai = bulanSekarang + 1;
+                        tahunSelesai = bulanSelesai > 12 ? tahunSekarang + 1 : tahunSekarang;
+                        bulanSelesai = bulanSelesai > 12 ? 1 : bulanSelesai;
+                    } else {
+                        bulanMulai = bulanSekarang - 1;
+                        tahunMulai = bulanMulai < 1 ? tahunSekarang - 1 : tahunSekarang;
+                        bulanMulai = bulanMulai < 1 ? 12 : bulanMulai;
+                        bulanSelesai = bulanSekarang;
+                        tahunSelesai = tahunSekarang;
+                    }
+                    
+                    // Periode sebelumnya (mundur 1 bulan)
+                    let bulanMulaiBefore = bulanMulai - 1;
+                    let tahunMulaiBefore = bulanMulaiBefore < 1 ? tahunMulai - 1 : tahunMulai;
+                    bulanMulaiBefore = bulanMulaiBefore < 1 ? 12 : bulanMulaiBefore;
+                    
+                    let bulanSelesaiBefore = bulanSelesai - 1;
+                    let tahunSelesaiBefore = bulanSelesaiBefore < 1 ? tahunSelesai - 1 : tahunSelesai;
+                    bulanSelesaiBefore = bulanSelesaiBefore < 1 ? 12 : bulanSelesaiBefore;
+                    
+                    const tanggalMulai = new Date(`${tahunMulai}-${bulanMulai}-16`);
+                    const tanggalSelesai = new Date(`${tahunSelesai}-${bulanSelesai}-15`);
+                    
+                    const tanggalMulaiBefore = new Date(`${tahunMulaiBefore}-${bulanMulaiBefore}-16`);
+                    const tanggalSelesaiBefore = new Date(`${tahunSelesaiBefore}-${bulanSelesaiBefore}-15`);
+                    
+                    // Hitung jumlah hari berjalan dalam periode saat ini
+                    const nowTime = nowUTC7.getTime();
+                    const startTime = tanggalMulai.getTime();
+                    const diffDays = Math.floor((nowTime - startTime) / (1000 * 60 * 60 * 24)) + 1;
+                    const hariDalamPeriode = diffDays > 0 ? diffDays : 0; // Pastikan tidak negatif
+                    
+                    // 🔹 Ambil data kehadiran dari API response
+                    const jumlahKehadiran = response.data.jumlah_kehadiran;
+                    const jumlahKehadiranBefore = response.data.jumlah_kehadiran_periode_before;
+                    
+                    // 🔹 Hitung jumlah hari dalam periode sebelumnya
+                    const hariDalamPeriodeBefore = Math.floor((tanggalSelesaiBefore - tanggalMulaiBefore) / (1000 * 60 * 60 * 24)) + 1;
+                    
+                    // 🔹 Hitung persentase kehadiran untuk periode saat ini & sebelumnya
+                    const persentase = ((jumlahKehadiran / hariDalamPeriode) * 100).toFixed(2);
+                    const persentaseBefore = ((jumlahKehadiranBefore / hariDalamPeriodeBefore) * 100).toFixed(2);
+                    
+                    // 🔹 Pesan motivasi
                     let pesan = "";
                     if (persentase < 60) {
                         pesan = "Yuk, kamu pasti lebih rajin lagi dalam mengikuti doa pagi ini 🤗";
@@ -277,15 +326,27 @@ client.on('message', async (message) => {
                         pesan = "Kamu luar biasa! Yuk terus pertahankan kerajinanmu ini ya 🤗";
                     }
                     
-                    const today = new Date();
+                    // 🔹 Format periode dalam bahasa Indonesia
+                    const options = { month: 'long', year: 'numeric' };
+                    const periodeMulai = tanggalMulai.toLocaleDateString('id-ID', options);
+                    const periodeSelesai = tanggalSelesai.toLocaleDateString('id-ID', options);
+                    const periodeMulaiBefore = tanggalMulaiBefore.toLocaleDateString('id-ID', options);
+                    const periodeSelesaiBefore = tanggalSelesaiBefore.toLocaleDateString('id-ID', options);
+                    
+                    // 🔹 Kirim pesan ke user
                     await client.sendMessage(from, 
-                        `📊 *Absensi Doa Pagi ` + userStates[from]?.userName + `*\n\n` +
-                        `📅 Bulan *${today.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}*\n` +
-                        `✅ Jumlah kehadiranmu: *${jumlahKehadiran} hari*\n` +
-                        `📆 Total hari berjalan: *${hariDalamBulan} hari*\n` +
-                        `📈 Persentase kehadiranmu: *${persentase}%*\n\n` +
+                        `📊 *Absensi Doa Pagi ${userStates[from]?.userName}*\n\n` +
+                        `📅 Periode *16 ${periodeMulai} - 15 ${periodeSelesai}*\n` +
+                        `✅ Kehadiran saat ini: *${jumlahKehadiran} hari*\n` +
+                        `📆 Total hari berjalan: *${hariDalamPeriode} hari*\n` +
+                        `📈 Persentase kehadiran: *${persentase}%*\n\n` +
+                        `📅 *Periode Sebelumnya* (16 ${periodeMulaiBefore} - 15 ${periodeSelesaiBefore})\n` +
+                        `✅ Kehadiran sebelumnya: *${jumlahKehadiranBefore} hari*\n` +
+                        `📆 Total hari dalam periode: *${hariDalamPeriodeBefore} hari*\n` +
+                        `📈 Persentase kehadiran sebelumnya: *${persentaseBefore}%*\n\n` +
                         `_${pesan}_`
                     );
+
                     delete userStates[from];
                 } else {
                     await client.sendMessage(from, `⚠️ *Error:* ${response.data.message}`);
