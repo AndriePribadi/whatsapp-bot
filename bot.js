@@ -727,7 +727,7 @@ client.on('message', async (message) => {
             console.log("🔄 Pesan dari status WhatsApp, diabaikan.");
             return;
         }else{
-            consol.log("pesan direct / group lebih dari 50 char");
+            console.log("pesan direct / group lebih dari 50 char");
         }
         const identity = await identityCheck();
         
