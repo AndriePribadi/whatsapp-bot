@@ -173,7 +173,7 @@ client.on('message', async (message) => {
             message += `_note : Doa Pagi hanya diterima sebelum pkl 09.00 setiap paginya_\n\n`;
         }
         
-        message += `Jika butuh bantuan lebih lanjut, \nJangan ragu untuk menghubungi home leader masing masing ya\n Selamat berjuang! God Bless ✨`;
+        message += `Jika butuh bantuan lebih lanjut, \nJangan ragu untuk menghubungi home leader masing masing ya\nSelamat berjuang! God Bless ✨`;
         
         await client.sendMessage(from, message);
         delete userStates[from];
