@@ -662,7 +662,12 @@ client.on('message', async (message) => {
     }
 
     if (text.length > 50 && !text.startsWith('/') && (!userStates[from] || !userStates[from].stage)) {
-            
+        if (message.type === 'broadcast' || message.type === 'status') {
+            console.log("🔄 Pesan dari status WhatsApp, diabaikan.");
+            return;
+        }else{
+            consol.log("pesan direct / group lebih dari 50 char");
+        }
         const identity = await identityCheck();
         
         // hanya jalan untuk WLS
