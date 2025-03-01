@@ -1239,8 +1239,18 @@ client.on('message', async (message) => {
             const saveRegistration = async (attempt = 1) => {
                 try {
                     console.log(`🔄 Percobaan ke-${attempt} untuk menyimpan pendaftaran...`);
-                    
-                    await axios.post(`${API_BASE_URL}/create_user.php`, userStates[from], {
+                      
+                    await axios.post(`${API_BASE_URL}/create_user.php`, {
+                        nama_lengkap: userStates[from].fullname,
+                        username: userStates[from].username,
+                        jenis_kelamin: userStates[from].gender,
+                        tempat_lahir: userStates[from].birthplace,
+                        tanggal_lahir: userStates[from].birthdate,
+                        email: userStates[from].email,
+                        kode_area: userStates[from].area_code,
+                        alamat: userStates[from].address,
+                        no_telepon: userStates[from].phone,
+                    }, {
                         headers: {
                             'User-Agent': 'Mozilla/5.0',
                             'Content-Type': 'application/json'
