@@ -1122,7 +1122,155 @@ client.on('message', async (message) => {
         return;
     }
 
+    const validateDate = (date) => {
+        return /^\d{4}-\d{2}-\d{2}$/.test(date);
+    };
     
+    const validateEmail = (email) => {
+        return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+    };
+    
+    const validateUsername = (username) => {
+        return /^[^\s]+$/.test(username);
+    };
+    
+    const cleanPhoneNumber = (phone) => {
+        return phone.replace(/[^0-9]/g, '');
+    };
+    
+    // Mulai proses register
+    if (text === '/register' && (!userStates[from] || userStates[from].stage === 'rgs_waiting_for_selection')) {    
+        userStates[from] = { stage: 'rgs_waiting_for_fullname' };
+        await client.sendMessage(from, "👤 Silakan masukkan nama lengkap Anda:");
+        return;
+    }
+    
+    // Proses pendaftaran tanpa switch case
+    if (userStates[from]?.stage === 'rgs_waiting_for_fullname') {
+        userStates[from].fullname = body;
+        userStates[from].stage = 'rgs_waiting_for_username';
+        await client.sendMessage(from, "🆔 Silakan masukkan username Anda (tanpa spasi):");
+        return;
+    }
+    
+    if (userStates[from]?.stage === 'rgs_waiting_for_username') {
+        if (!validateUsername(body)) {
+            await client.sendMessage(from, "⚠️ Username tidak boleh mengandung spasi. Silakan masukkan username yang valid:");
+            return;
+        }
+        userStates[from].username = body;
+        userStates[from].stage = 'rgs_waiting_for_gender';
+        await client.sendMessage(from, "⚤ Silakan masukkan jenis kelamin Anda (l/p):");
+        return;
+    }
+    
+    if (userStates[from]?.stage === 'rgs_waiting_for_gender') {
+        if (!['l', 'L', 'p', 'P'].includes(body)) {
+            await client.sendMessage(from, "⚠️ Jenis kelamin tidak valid. Silakan masukkan 'l' untuk Laki-laki atau 'p' untuk Perempuan:");
+            return;
+        }
+        userStates[from].gender = (body.toLowerCase() === 'l') ? 'Laki-laki' : 'Perempuan';
+        userStates[from].photo = (body.toLowerCase() === 'l') ? "Files/user.png" : "Files/user-girl.png";
+        userStates[from].stage = 'rgs_waiting_for_birthplace';
+        await client.sendMessage(from, "🏡 Silakan masukkan tempat lahir Anda:");
+        return;
+    }
+    
+    if (userStates[from]?.stage === 'rgs_waiting_for_birthplace') {
+        userStates[from].birthplace = body;
+        userStates[from].stage = 'rgs_waiting_for_birthdate';
+        await client.sendMessage(from, "📅 Silakan masukkan tanggal lahir Anda (YYYY-MM-DD):");
+        return;
+    }
+    
+    if (userStates[from]?.stage === 'rgs_waiting_for_birthdate') {
+        if (!validateDate(body)) {
+            await client.sendMessage(from, "⚠️ Format tanggal lahir salah. Harap masukkan dalam format YYYY-MM-DD:");
+            return;
+        }
+        userStates[from].birthdate = body;
+        userStates[from].stage = 'rgs_waiting_for_email';
+        await client.sendMessage(from, "📧 Silakan masukkan email Anda:");
+        return;
+    }
+    
+    if (userStates[from]?.stage === 'rgs_waiting_for_email') {
+        if (!validateEmail(body)) {
+            await client.sendMessage(from, "⚠️ Format email tidak valid. Harap masukkan email yang benar:");
+            return;
+        }
+        userStates[from].email = body;
+        userStates[from].stage = 'rgs_waiting_for_area_code';
+        await client.sendMessage(from, "📍 Silakan masukkan kode area Anda:");
+        return;
+    }
+    
+    if (userStates[from]?.stage === 'rgs_waiting_for_area_code') {
+        userStates[from].area_code = body;
+        userStates[from].stage = 'rgs_waiting_for_address';
+        await client.sendMessage(from, "🏠 Silakan masukkan alamat Anda:");
+        return;
+    }
+    
+    if (userStates[from]?.stage === 'rgs_waiting_for_address') {
+        userStates[from].address = body;
+        userStates[from].phone = cleanPhoneNumber(from); // Nomor otomatis dari WhatsApp
+        userStates[from].stage = 'rgs_waiting_for_confirmation';
+        
+        await client.sendMessage(from, 
+            `✅ Mohon konfirmasi data berikut:
+                
+        👤 Nama Lengkap: ${userStates[from].fullname}
+        🆔 Username: ${userStates[from].username}
+        ⚤ Jenis Kelamin: ${userStates[from].gender}
+        🏡 Tempat Lahir: ${userStates[from].birthplace}
+        📅 Tanggal Lahir: ${userStates[from].birthdate}
+        📧 Email: ${userStates[from].email}
+        📍 Kode Area: ${userStates[from].area_code}
+        🏠 Alamat: ${userStates[from].address}
+        📞 No. Telepon: ${userStates[from].phone}
+    
+        Ketik *submit* untuk menyimpan atau *cancel* untuk membatalkan.`);
+        return;
+    }
+    
+    if (userStates[from]?.stage === 'rgs_waiting_for_confirmation') {
+        if (body.toLowerCase() === "submit") {
+            const saveRegistration = async (attempt = 1) => {
+                try {
+                    console.log(`🔄 Percobaan ke-${attempt} untuk menyimpan pendaftaran...`);
+                    
+                    await axios.post(`${API_BASE_URL}/create_user.php`, userStates[from], {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0',
+                            'Content-Type': 'application/json'
+                        },
+                        httpsAgent: agent
+                    });
+    
+                    await client.sendMessage(from, "✅ Pendaftaran berhasil! 🎉");
+                    delete userStates[from];
+                } catch (error) {
+                    console.error(`⚠️ Error pada percobaan ke-${attempt}:`, error.message);
+                    if (attempt < 10) {
+                        setTimeout(() => saveRegistration(attempt + 1), 2000);
+                    } else {
+                        await client.sendMessage(from, "❌ Maaf, terjadi kesalahan saat menyimpan pendaftaran Anda.");
+                        delete userStates[from];
+                    }
+                }
+            };
+            saveRegistration();
+            return;
+        }
+        if (body.toLowerCase() === "cancel") {
+            await client.sendMessage(from, "❌ Pendaftaran dibatalkan.");
+            delete userStates[from];
+            return;
+        }
+        await client.sendMessage(from, "⚠️ Mohon ketik *submit* untuk menyimpan atau *cancel* untuk membatalkan.");
+    }
+
 });
 
 client.initialize();
